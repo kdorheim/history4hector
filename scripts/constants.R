@@ -34,7 +34,8 @@ sapply(DIRS, dir.create, showWarnings = FALSE, recursive = TRUE)
 
 # # 2. Define Constants ----------------------------------------------------------
 
-UNITS <- list(MTonne_to_Pg = 1e-3) # Convert from million tonne of carbon  to Pg
+UNITS <- list(MTonne_to_Pg = 1e-3, # Convert from million tonne of carbon  to Pg
+              GtC_to_PgC = 1) # gigaton of carbon (GtC) and petagram of carbon (PgC) are equivalent
 
 
 

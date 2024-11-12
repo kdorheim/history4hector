@@ -8,82 +8,62 @@
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
-GCP_YEAR <- "2023v1.0"
+# TODO need to decide what want to do with sources and versions...
+GCP_YEAR <- "2023v1"
 CITATION <- "Global Carbon Budget 2023 (Friedlingstein et al., 2023b, ESSD)"
 
 
-
-
-
-
-
-
-# 1. CO2 Fossil Fuel Emissions -------------------------------------------------
+# 1. Main Chunk CO2 Emissions -------------------------------------------------
 
 # Check inputs
-ffi_file <- list.files(DIRS$RAW_DATA, pattern = "National_Fossil_Carbon_Emissions", full.names = TRUE)
-assert_that(file.exists(ffi_file), msg =  "missing data need run get-raw-data.sh")
+gcb_file <- list.files(DIRS$RAW_DATA, pattern = "Global_Carbon_Budget", full.names = TRUE)
+assert_that(file.exists(gcb_file), msg =  "missing data need run get-raw-data.sh")
 
-version <- grepl(pattern = GCP_YEAR, x = ffi_file)
+version <- grepl(pattern = GCP_YEAR, x = gcb_file)
 assert_that(version, msg =  "wrong version of GCP data located")
 
 
 # Read in the fossil fuels data
-ffi_data <- readxl::read_xlsx(path = ffi_file, sheet = "Territorial Emissions", skip = 11)
+readxl::read_xlsx(path = gcb_file, sheet = "Historical Budget", skip = 15) %>%
+    select(year = Year, "fossil emissions excluding carbonation", "land-use change emissions") ->
+    gcb_data
 
-# It is unideal but we know that the years data is stored in the first column,
-# extract those values here.
-years <- unlist(ffi_data[, 1], use.names = FALSE)
-emiss <- ffi_data$World * UNITS$MTonne_to_Pg
+names(gcb_data) <- c("year", FFI_EMISSIONS(), LUC_EMISSIONS())
 
-# Format into a single data frame
-ffi_emiss_df <- data.frame(year = years, value = emiss,
-                           variable = FFI_EMISSIONS(),
-                           units = getunits(FFI_EMISSIONS()))
+# Change from wide to long format,
+gcb_data %>%
+    pivot_longer(-year, names_to = "variable") %>%
+    mutate(units = getunits(variable),
+           value = value * UNITS$GtC_to_PgC) %>%
+    na.omit ->
+    gcb_emissions
 
-
-
-# 2. CO2 Land Use Land Cover Change Emissions ----------------------------------
-
-
-# Check inputs
-luc_file <- list.files(DIRS$RAW_DATA, pattern = "National_LandUseChange_Carbon_Emissions", full.names = TRUE)
-assert_that(file.exists(luc_file), msg =  "missing data need run get-raw-data.sh")
-
-version <- grepl(pattern = GCP_YEAR, x = luc_file)
-assert_that(version, msg =  "wrong version of GCP data located")
+# TODO this is something that we might want to revisit
+# Emissions must be strictly positive, make sure that is the case here, otherwise
+# throw an error.
+assert_that(isFALSE(any(gcb_emissions$value < 0)), msg = "nevative CO2 emissions dected")
 
 
-# Read in the fossil fuels data
-ffi_data <- readxl::read_xlsx(path = luc_file, sheet = "BLUE", skip = 11)
-
-# It is unideal but we know that the years data is stored in the first column,
-# extract those values here.
-years <- unlist(ffi_data[, 1], use.names = FALSE)
-emiss <- ffi_data$World * UNITS$MTonne_to_Pg
-
-# Format into a single data frame
-ffi_emiss_df <- data.frame(year = years, value = emiss,
-                           variable = FFI_EMISSIONS(),
-                           units = getunits(FFI_EMISSIONS()))
-
-
-
-
-
+# Save the emissions from the global carbon project
+write.csv(gcb_emissions,
+          file = file.path(DIRS$L0, "L0.hector_GCP.csv"),
+          row.names = FALSE)
 
 
 # Z. Comparison with Hector inputs ---------------------------------------------
 # TODO remove this eventually after feel good about things
 source(here::here("scripts", "dev", "hector_comp_data.R"))
 
-hector_comp %>%
-    filter(variable == FFI_EMISSIONS()) %>%
+gcb_emissions$source <- "GCB"
+hector_comp$source <- "hector"
+
+bind_rows(gcb_emissions, hector_comp) %>%
+    filter(variable == LUC_EMISSIONS()) %>%
     filter(year <= 2024) %>%
     ggplot() +
-    geom_line(aes(year, hector_value)) +
-    geom_line(data = emiss_df, aes(year, value, color = "GCP")) +
-    NULL
+    geom_line(aes(year, value, color = source)) +
+    geom_line(data = old, aes(year, value, color = "old"))
+NULL
 
 
 

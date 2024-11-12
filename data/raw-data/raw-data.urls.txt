@@ -1,2 +1,1 @@
-https://globalcarbonbudgetdata.org/downloads/latest-data/National_Fossil_Carbon_Emissions_2023v1.0.xlsx
-https://globalcarbonbudgetdata.org/downloads/latest-data/National_LandUseChange_Carbon_Emissions_2023v1.0.xlsx
+https://globalcarbonbudgetdata.org/downloads/latest-data/Global_Carbon_Budget_2023v1.1.xlsx
