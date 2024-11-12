@@ -4,13 +4,18 @@
 #   - how do we get we want to get the before 1850 values?
 #   - how do we want to handle the daccs uptake? i think right now
 #   - how do want to handle the different GCB releases?
+#   - set up the mapping file?
 # 0. Set Up --------------------------------------------------------------------
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
-# TODO need to decide what want to do with sources and versions...
+# TODO need to decide what want to do with sources and versions... also may be copy
+# and paste the full data ciation here...
 GCP_YEAR <- "2023v1"
 CITATION <- "Global Carbon Budget 2023 (Friedlingstein et al., 2023b, ESSD)"
+
+
+
 
 
 # 1. Main Chunk CO2 Emissions -------------------------------------------------
@@ -41,7 +46,7 @@ gcb_data %>%
 # TODO this is something that we might want to revisit
 # Emissions must be strictly positive, make sure that is the case here, otherwise
 # throw an error.
-assert_that(isFALSE(any(gcb_emissions$value < 0)), msg = "nevative CO2 emissions dected")
+assert_that(isFALSE(any(gcb_emissions$value < 0)), msg = "negative CO2 emissions dected")
 
 
 # Save the emissions from the global carbon project
@@ -61,9 +66,8 @@ bind_rows(gcb_emissions, hector_comp) %>%
     filter(variable == LUC_EMISSIONS()) %>%
     filter(year <= 2024) %>%
     ggplot() +
-    geom_line(aes(year, value, color = source)) +
-    geom_line(data = old, aes(year, value, color = "old"))
-NULL
+    geom_line(aes(year, value, color = source))
+
 
 
 
