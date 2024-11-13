@@ -2,3 +2,4 @@
 *.zip
 *.csv
 *.[0-9]
+*.DS_Store
