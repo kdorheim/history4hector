@@ -1,14 +1,12 @@
 # Description: Read in the CEDS data and convert to Hector units and naming
-# conventions. Since the CEDS data set does not include emission sources
-# from biomass burning several some of the emissions are "incomplete" and
-# will need to be combined with emissions from other sources. Those
-# emission species will be written out to L0 data directory where as the
-# emission species are written out to the L1 data directory.
-# TODO
-# - consider if the L0 outputs should be written out separately for each em type..
-# - comment out or delete the diagnostics section
-# - write a function that reads in and formats the mapping function
+# conventions. Some of the CEDS emissions are for only certain emissions
+# sources (exclude things like biomass burning) therefore the emissions
+# are categorized into sectors and total.
 # 0. Set Up --------------------------------------------------------------------
+# Start from a clean environment
+# TODO this would be dropped if written as a function like gcamdata
+remove(list = ls())
+
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
@@ -46,22 +44,9 @@ find_my_ceds_files <- function(DIR, ceds_v = "v2024_07_08"){
 
 
 # 1. Import Data ---------------------------------------------------------------
-# TODO ugh I think there is probably a better way to handle this..
-# Load the mapping file.
-mapping <- read.csv(list.files(DIRS$MAPPING, pattern = "CEDS_hector_mapping",
+# Load the mapping file
+mapping <- read.csv(list.files(DIRS$MAPPING, pattern = "L0.CEDS_hector_mapping",
                                full.names = TRUE), comment.char = "#")
-
-# Split the mapping file into the emission types that represent the total
-# global values that will be ready to read into hector and the emissions
-# that need to be aggregated with additional sources because they
-# do not account for all sectors contributing to global emissions.
-mapping %>%
-    filter(total == 1) ->
-    mapping_to_hector
-
-mapping %>%
-    filter(total == 0) ->
-    sectoral_mapping
 
 # Read in all the raw data
 find_my_ceds_files(DIRS$RAW_DATA) %>%
@@ -70,59 +55,38 @@ find_my_ceds_files(DIRS$RAW_DATA) %>%
     ceds_raw_data
 
 # 3. Total Global Emissions ----------------------------------------------------
-# TODO honestly I think that there might be other perfered values  values for these time series...
 ceds_raw_data %>%
-    filter(em %in% mapping_to_hector$ceds_variable) %>%
+    # subset the data so that it only includes the emissions we are interested.
+    filter(em %in% mapping$ceds_variable) %>%
+    # Change from wide to long format and make sure that the years are integers
+    # in preparation for joining with the mapping file.
     pivot_longer(starts_with("X"), names_to = "year") %>%
     mutate(year = as.integer(gsub(replacement = "", x = year, pattern = "X"))) %>%
     rename(ceds_variable = em, ceds_units = units) %>%
-    inner_join(mapping_to_hector, by = join_by(ceds_variable, ceds_units)) %>%
+    inner_join(mapping, by = join_by(ceds_variable, ceds_units)) %>%
+    # Convert to Hector units and aggregate!
     mutate(value = value * cf) %>%
-    summarise(value = sum(value), .by = c("hector_variable", "year", "hector_units")) %>%
-    select(variable = hector_variable, year, value, units = hector_units) ->
-    ready_for_hector
+    summarise(value = sum(value), .by = c("hector_variable", "year", "hector_units",
+                                          "hector_total", "hector_sector")) %>%
+    select(year, total = hector_total, sector = hector_sector,
+           variable = hector_variable, value, units = hector_units) %>%
+    mutate(source = "CEDS") ->
+    out
 
-# Save the total emissions that a ready to be read into Hector
-emiss_tag <- paste0(gsub(x = unique(ready_for_hector$variable),
-                         replacement = "", pattern = "_emissions"),
-                    collapse = "_")
-fname <- paste0("Hector_", emiss_tag, ".csv")
-write.csv(ready_for_hector, file = file.path(DIRS$L1, fname), row.names = FALSE)
+write.csv(out, file = file.path(DIRS$L0, "L0.CEDS_emissions.csv"), row.names = FALSE)
 
-
-
-# 4. Incomplete Global Emissions ------------------------------------------------
-# Convert the incomplete global emissions to Hector units, these emission species
-# are missing sectors or categories such as emissions from open burning and
-# what not.
-ceds_raw_data %>%
-    filter(em %in% sectoral_mapping$ceds_variable) %>%
-    pivot_longer(starts_with("X"), names_to = "year") %>%
-    mutate(year = as.integer(gsub(replacement = "", x = year, pattern = "X"))) %>%
-    rename(ceds_variable = em, ceds_units = units) %>%
-    left_join(sectoral_mapping, by = join_by(ceds_variable, ceds_units)) %>%
-    mutate(value = value * cf) %>%
-    select(variable = hector_variable, sector, year, units = hector_units, value) ->
-    incomplete
-
-# Save the incomplete emissions that will need to be combined with other
-# emission sources to have the total global values.
-emiss_tag <- paste0(gsub(x = unique(incomplete$variable),
-                         replacement = "", pattern = "_emissions"),
-                    collapse = "_")
-fname <- paste0("Incomplete-CEDS_", emiss_tag, ".csv")
-write.csv(incomplete, file = file.path(DIRS$L0, fname), row.names = FALSE)
 
 # Z. Comparison with Hector inputs ---------------------------------------------
 # TODO remove this eventually after feel good about things but this
 # line will load hector_comp which is the default set of emissions
 # that is useful for comparing results with
+if(FALSE){
+
 source(here::here("scripts", "dev", "hector_comp_data.R"))
 
+em_name <- EMISSIONS_CH4()
 
-em_name <- EMISSIONS_OC()
-
-incomplete %>%
+out %>%
     filter(variable == em_name) %>%
     summarise(value = sum(value), .by = c("variable", "year", "units")) ->
     ceds_emiss
@@ -134,4 +98,5 @@ hector_comp %>%
 ggplot() +
     geom_line(data = ceds_emiss, aes(year, value, color = "ceds")) +
     geom_line(data = default_emiss, aes(year, value, color = "default"))
+}
 

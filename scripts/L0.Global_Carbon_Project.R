@@ -1,72 +1,70 @@
-# Format the Global Carbon Project data for Hector
+# Description: Read in the Global carbon project data and convert to Hector units
+# and naming conventions. Emissions may be categorized into
+# are categorized into sectors and total.
 
-# TODO
-#   - how do we get we want to get the before 1850 values?
-#   - how do we want to handle the daccs uptake? i think right now
-#   - how do want to handle the different GCB releases?
-#   - set up the mapping file?
+
+# Global Carbon Budget 2024 (Friedlingstein et al., 2024b, ESSD)
+# Description file:///Users/dorh012/Downloads/Global+Carbon+Budget+v2024+Dataset+Descriptions.pdf
 # 0. Set Up --------------------------------------------------------------------
+# Start from a clean environment
+# TODO this would be dropped if written as a function like gcamdata
+remove(list = ls())
+
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
-# TODO need to decide what want to do with sources and versions... also may be copy
-# and paste the full data ciation here...
-GCP_YEAR <- "2023v1"
-CITATION <- "Global Carbon Budget 2023 (Friedlingstein et al., 2023b, ESSD)"
-
-
-
-
 
 # 1. Main Chunk CO2 Emissions -------------------------------------------------
+# Load the mapping file
+mapping <- read.csv(list.files(DIRS$MAPPING, pattern = "L0.GCB_hector_mapping.csv",
+                               full.names = TRUE), comment.char = "#")
+
 
 # Check inputs
-gcb_file <- list.files(DIRS$RAW_DATA, pattern = "Global_Carbon_Budget", full.names = TRUE)
+gcb_file <- list.files(DIRS$RAW_DATA, pattern = "Global_Carbon_Budget_2024_v1.0", full.names = TRUE)
 assert_that(file.exists(gcb_file), msg =  "missing data need run get-raw-data.sh")
 
-version <- grepl(pattern = GCP_YEAR, x = gcb_file)
-assert_that(version, msg =  "wrong version of GCP data located")
 
 
-# Read in the fossil fuels data
-readxl::read_xlsx(path = gcb_file, sheet = "Historical Budget", skip = 15) %>%
-    select(year = Year, "fossil emissions excluding carbonation", "land-use change emissions") ->
-    gcb_data
-
-names(gcb_data) <- c("year", FFI_EMISSIONS(), LUC_EMISSIONS())
-
-# Change from wide to long format,
-gcb_data %>%
-    pivot_longer(-year, names_to = "variable") %>%
-    mutate(units = getunits(variable),
-           value = value * UNITS$GtC_to_PgC) %>%
+# Read in the raw data change to long format in preparation for joining
+# with the mapping file.
+readxl::read_xlsx(path = gcb_file, sheet = "Historical Budget", skip = 15)  %>%
+    pivot_longer(-Year, names_to = "gcb_variable")  %>%
+    inner_join(mapping, by = join_by(gcb_variable)) %>%
+    # Convert to Hector values
+    mutate(value = cf * value)  %>%
+    select(year = Year, total = hector_total, sector = hector_sector,
+           variable = hector_variable, value, units = hector_units) %>%
+    mutate(source = "GCP") %>%
     na.omit ->
-    gcb_emissions
+    out
+
 
 # TODO this is something that we might want to revisit
 # Emissions must be strictly positive, make sure that is the case here, otherwise
 # throw an error.
-assert_that(isFALSE(any(gcb_emissions$value < 0)), msg = "negative CO2 emissions dected")
+assert_that(isFALSE(any(out$value < 0)), msg = "negative CO2 emissions dected")
 
 
 # Save the emissions from the global carbon project
-write.csv(gcb_emissions,
-          file = file.path(DIRS$L0, "L0.hector_GCP.csv"),
-          row.names = FALSE)
+write.csv(out, file = file.path(DIRS$L0, "L0.GCP_emissions.csv"), row.names = FALSE)
 
 
 # Z. Comparison with Hector inputs ---------------------------------------------
-# TODO remove this eventually after feel good about things
-source(here::here("scripts", "dev", "hector_comp_data.R"))
+if(FALSE){
+    # TODO remove this eventually after feel good about things
+    source(here::here("scripts", "dev", "hector_comp_data.R"))
 
-gcb_emissions$source <- "GCB"
-hector_comp$source <- "hector"
+    out$source <- "GCB"
+    hector_comp$source <- "hector"
 
-bind_rows(gcb_emissions, hector_comp) %>%
-    filter(variable == LUC_EMISSIONS()) %>%
-    filter(year <= 2024) %>%
-    ggplot() +
-    geom_line(aes(year, value, color = source))
+    bind_rows(out, hector_comp) %>%
+        filter(variable == LUC_EMISSIONS()) %>%
+        filter(year <= 2024) %>%
+        ggplot() +
+        geom_line(aes(year, value, color = source))
+}
+
 
 
 
