@@ -1,0 +1,8 @@
+# Mapping file between PRIMAP v2.6 and Hector emissions,,,,,,,,,
+# Follows the naming conention of the PRIMAP data set,,,,,,,,,
+# cf stands for conversion factor,,,,,,,,,
+entity,unit,scenario,category,cf,hector_variable,hector_units,hector_total,hector_sector,cf_notes
+SF6,SF6 * gigagram / a,HISTTP,M.0.EL,1,SF6_emissions,Gg,1,0,
+CH4,CH4 * gigagram / a,HISTTP,M.0.EL,0.001,CH4_emissions,Tg CH4,0,non biomass,
+CO2,CO2 * gigagram / a,HISTTP,M.0.EL,2.72893E-07,ffi_emissions,Pg C/yr,1,0,12.01/44.01 x 1e-6
+N2O,N2O * gigagram / a,HISTTP,M.0.EL,0.000636673,N2O_emissions,Tg N,0,non biomass,28.02/44.01 * 10^{-3}

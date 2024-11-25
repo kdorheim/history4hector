@@ -1,0 +1,6 @@
+*.xlsx
+*.zip
+*.csv
+*.[0-9]
+*.DS_Store
+README_aggregate_emissions.txt
