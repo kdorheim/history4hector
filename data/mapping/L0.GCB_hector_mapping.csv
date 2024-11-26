@@ -1,0 +1,6 @@
+# Map Global Change Budget (GCB) emissions to hector units
+# cf is the conversion factor from GCB to Hector
+# the total column indicates if the emissions are complete for all sectors 1 or need to be aggregaed with additional sources 0
+gcb_variable,gcb_units,cf,hector_variable,hector_units,notes_on_cf,hector_total ,hector_sector
+fossil emissions excluding carbonation,Pg C/yr,1,ffi_emissions,Pg C/yr,,1,0
+land-use change emissions,Pg C/yr,1,luc_emissions,Pg C/yr,,1,0

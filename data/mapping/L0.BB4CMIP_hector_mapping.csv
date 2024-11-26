@@ -1,0 +1,64 @@
+# Map BB4CMIP emissions to hector units , this should probably map all the CEDS sectors to the RCMIP aggregation but we are short ontime ,,,,,,,,
+# cf is the conversion factor from BB4CMIP to Hector,,,,,,,,,
+# the total column indicates if the emissions are complete for all sectors 1 or need to be aggregaed with additional sources 0,,,,,,,,,
+sector,variable,units,cf,hector_variable,hector_units,notes_on_cf,hector_total ,hector_sector,cf_notes
+AGRI,BC,Gg,0.001,BC_emissions,Tg,,0,biomass burn,
+BORF,BC,Gg,0.001,BC_emissions,Tg,,0,biomass burn,
+DEFO,BC,Gg,0.001,BC_emissions,Tg,,0,biomass burn,
+PEAT,BC,Gg,0.001,BC_emissions,Tg,,0,biomass burn,
+SAVA,BC,Gg,0.001,BC_emissions,Tg,,0,biomass burn,
+TEMF,BC,Gg,0.001,BC_emissions,Tg,,0,biomass burn,
+AGRI,CH4,Gg,0.001,CH4_emissions,Tg CH4,,0,biomass burn,
+BORF,CH4,Gg,0.001,CH4_emissions,Tg CH4,,0,biomass burn,
+DEFO,CH4,Gg,0.001,CH4_emissions,Tg CH4,,0,biomass burn,
+PEAT,CH4,Gg,0.001,CH4_emissions,Tg CH4,,0,biomass burn,
+SAVA,CH4,Gg,0.001,CH4_emissions,Tg CH4,,0,biomass burn,
+TEMF,CH4,Gg,0.001,CH4_emissions,Tg CH4,,0,biomass burn,
+AGRI,CO,Gg,0.001,CO_emissions,Tg CO,,0,biomass burn,
+BORF,CO,Gg,0.001,CO_emissions,Tg CO,,0,biomass burn,
+DEFO,CO,Gg,0.001,CO_emissions,Tg CO,,0,biomass burn,
+PEAT,CO,Gg,0.001,CO_emissions,Tg CO,,0,biomass burn,
+SAVA,CO,Gg,0.001,CO_emissions,Tg CO,,0,biomass burn,
+TEMF,CO,Gg,0.001,CO_emissions,Tg CO,,0,biomass burn,
+AGRI,H2,Gg,0.001,H2_emissions,Tg,,0,biomass burn,
+BORF,H2,Gg,0.001,H2_emissions,Tg,,0,biomass burn,
+DEFO,H2,Gg,0.001,H2_emissions,Tg,,0,biomass burn,
+PEAT,H2,Gg,0.001,H2_emissions,Tg,,0,biomass burn,
+SAVA,H2,Gg,0.001,H2_emissions,Tg,,0,biomass burn,
+TEMF,H2,Gg,0.001,H2_emissions,Tg,,0,biomass burn,
+AGRI,N2O,Tg,NA,N2O_emissions,Tg N,,0,biomass burn,having issues here
+BORF,N2O,Tg,NA,N2O_emissions,Tg N,,0,biomass burn,
+DEFO,N2O,Tg,NA,N2O_emissions,Tg N,,0,biomass burn,
+PEAT,N2O,Tg,NA,N2O_emissions,Tg N,,0,biomass burn,
+SAVA,N2O,Tg,NA,N2O_emissions,Tg N,,0,biomass burn,
+TEMF,N2O,Tg,NA,N2O_emissions,Tg N,,0,biomass burn,
+AGRI,NH3,Gg,0.001,NH3_emissions,Tg,,0,biomass burn,
+BORF,NH3,Gg,0.001,NH3_emissions,Tg,,0,biomass burn,
+DEFO,NH3,Gg,0.001,NH3_emissions,Tg,,0,biomass burn,
+PEAT,NH3,Gg,0.001,NH3_emissions,Tg,,0,biomass burn,
+SAVA,NH3,Gg,0.001,NH3_emissions,Tg,,0,biomass burn,
+TEMF,NH3,Gg,0.001,NH3_emissions,Tg,,0,biomass burn,
+AGRI,NMVOC,Gg,0.001,NMVOC_emissions,Tg NMVOC,,0,biomass burn,
+BORF,NMVOC,Gg,0.001,NMVOC_emissions,Tg NMVOC,,0,biomass burn,
+DEFO,NMVOC,Gg,0.001,NMVOC_emissions,Tg NMVOC,,0,biomass burn,
+PEAT,NMVOC,Gg,0.001,NMVOC_emissions,Tg NMVOC,,0,biomass burn,
+SAVA,NMVOC,Gg,0.001,NMVOC_emissions,Tg NMVOC,,0,biomass burn,
+TEMF,NMVOC,Gg,0.001,NMVOC_emissions,Tg NMVOC,,0,biomass burn,
+AGRI,NOx,Gg N2O,0.000304454,NOX_emissions,Tg N,,0,biomass burn,(14.007/46.007) * 0.001
+BORF,NOx,Gg N2O,0.000304454,NOX_emissions,Tg N,,0,biomass burn,(14.007/46.007) * 0.001
+DEFO,NOx,Gg N2O,0.000304454,NOX_emissions,Tg N,,0,biomass burn,(14.007/46.007) * 0.001
+PEAT,NOx,Gg N2O,0.000304454,NOX_emissions,Tg N,,0,biomass burn,(14.007/46.007) * 0.001
+SAVA,NOx,Gg N2O,0.000304454,NOX_emissions,Tg N,,0,biomass burn,(14.007/46.007) * 0.001
+TEMF,NOx,Gg N2O,0.000304454,NOX_emissions,Tg N,,0,biomass burn,(14.007/46.007) * 0.001
+AGRI,OC,Gg,0.001,OC_emissions,Tg,,0,biomass burn,
+BORF,OC,Gg,0.001,OC_emissions,Tg,,0,biomass burn,
+DEFO,OC,Gg,0.001,OC_emissions,Tg,,0,biomass burn,
+PEAT,OC,Gg,0.001,OC_emissions,Tg,,0,biomass burn,
+SAVA,OC,Gg,0.001,OC_emissions,Tg,,0,biomass burn,
+TEMF,OC,Gg,0.001,OC_emissions,Tg,,0,biomass burn,
+AGRI,SO2,Gg  SO2,0.500780031,SO2_emissions,Gg S,,0,biomass burn,(32.1/64.1)
+BORF,SO2,Gg  SO3,0.500780031,SO2_emissions,Gg S,,0,biomass burn,(32.1/64.1)
+DEFO,SO2,Gg  SO4,0.500780031,SO2_emissions,Gg S,,0,biomass burn,(32.1/64.1)
+PEAT,SO2,Gg  SO5,0.500780031,SO2_emissions,Gg S,,0,biomass burn,(32.1/64.1)
+SAVA,SO2,Gg  SO6,0.500780031,SO2_emissions,Gg S,,0,biomass burn,(32.1/64.1)
+TEMF,SO2,Gg  SO7,0.500780031,SO2_emissions,Gg S,,0,biomass burn,(32.1/64.1)
