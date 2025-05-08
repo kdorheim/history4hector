@@ -47,7 +47,7 @@ assert_that(isFALSE(any(out$value < 0)), msg = "negative CO2 emissions dected")
 
 
 # Save the emissions from the global carbon project
-write.csv(out, file = file.path(DIRS$L0, "L0.GCP_emissions.csv"), row.names = FALSE)
+write.csv(out, file = file.path(DIRS$INTERMED, "L0.GCP_emissions.csv"), row.names = FALSE)
 
 
 # Z. Comparison with Hector inputs ---------------------------------------------

@@ -1,11 +1,6 @@
-# Description: Read in the CEDS data and convert to Hector units and naming
-# conventions. Some of the CEDS emissions are for only certain emissions
-# sources (exclude things like biomass burning) therefore the emissions
-# are categorized into sectors and total.
+# Description: Read in the CEDS data and format.
+
 # 0. Set Up --------------------------------------------------------------------
-# Start from a clean environment
-# TODO this would be dropped if written as a function like gcamdata
-remove(list = ls())
 
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
@@ -73,30 +68,5 @@ ceds_raw_data %>%
     mutate(source = "CEDS") ->
     out
 
-write.csv(out, file = file.path(DIRS$L0, "L0.CEDS_emissions.csv"), row.names = FALSE)
-
-
-# Z. Comparison with Hector inputs ---------------------------------------------
-# TODO remove this eventually after feel good about things but this
-# line will load hector_comp which is the default set of emissions
-# that is useful for comparing results with
-if(FALSE){
-
-source(here::here("scripts", "dev", "hector_comp_data.R"))
-
-em_name <- EMISSIONS_CH4()
-
-out %>%
-    filter(variable == em_name) %>%
-    summarise(value = sum(value), .by = c("variable", "year", "units")) ->
-    ceds_emiss
-
-hector_comp %>%
-    filter(variable == em_name) ->
-    default_emiss
-
-ggplot() +
-    geom_line(data = ceds_emiss, aes(year, value, color = "ceds")) +
-    geom_line(data = default_emiss, aes(year, value, color = "default"))
-}
+write.csv(out, file = file.path(DIRS$INTERMED, "L0.CEDS_emissions.csv"), row.names = FALSE)
 

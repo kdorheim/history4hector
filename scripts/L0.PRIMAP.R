@@ -58,7 +58,7 @@ global_data %>%
     mutate(source = "PRIMAP") ->
     out
 
-write.csv(out, file = file.path(DIRS$L0, "L0.PRIMAP_emissions.csv"), row.names = FALSE)
+write.csv(out, file = file.path(DIRS$INTERMED, "L0.PRIMAP_emissions.csv"), row.names = FALSE)
 
 
 # Z. Comparison with Hector inputs ---------------------------------------------
