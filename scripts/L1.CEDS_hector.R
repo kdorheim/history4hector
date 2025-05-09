@@ -13,7 +13,7 @@ DIRS$INTERMED %>%
     ceds_raw
 
 DIRS$MAPPING %>%
-    list.files(pattern = "L0.CEDS_hector_mapping.csv",
+    list.files(pattern = "L1.CEDS_hector_mapping.csv",
                full.names = TRUE) %>%
     read.csv(comment.char = "#") %>%
     mutate(units = format_units_fxn(units)) ->
@@ -23,7 +23,7 @@ DIRS$MAPPING %>%
 # 1. Main Chunk ----------------------------------------------------------------
 
 ceds_raw %>%
-    inner_join(mapping, by = join_by(variable, units)) %>%
+    left_join(mapping, by = join_by(variable)) %>%
     # Apply the conversion factor.
     mutate(value = value * cf) %>%
     check_req_names(req_cols = HEADERS$L1) ->
@@ -36,7 +36,4 @@ output %>%
     check_req_names(req_cols = HEADERS$L1) %>%
     write.csv(file = file.path(DIRS$INTERMED, "L1.CEDS_hector.csv"),
               row.names = FALSE)
-
-
-
 

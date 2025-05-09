@@ -50,6 +50,8 @@ find_my_ceds_files(DIRS$RAW_DATA) %>%
 # Change from wide to long format.
 ceds_wide_data %>%
     pivot_longer(starts_with("X"), names_to = "year") %>%
+    # Drop NAs introduced by the pivot.
+    na.omit %>%
     mutate(year = as.integer(gsub(replacement = "",
                                   x = year,
                                   pattern = "X"))) %>%
@@ -66,4 +68,8 @@ output %>%
               row.names = FALSE)
 
 
-
+output %>%
+    filter(variable == "CH4_Extension") %>%
+    summarise(value = sum(value), .by = "year") %>%
+    ggplot(aes(year, value)) +
+    geom_line()
