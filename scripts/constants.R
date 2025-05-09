@@ -77,14 +77,61 @@ check_req_names <- function(df, req_cols){
     return(df)
 }
 
+# TODO should generalize to make more useful
+# Extend the emissions until 1745
+# Args
+#   df: data.frame emissions that start in 1750 and need to be extended until 1745
+# Return: data.frame that has extended the emissions until 1745
+extend_to_1745 <- function(df){
+
+    # Throw an error if any of the required columns are missing
+    req_cols <- c("year", "value")
+    stopifnot(all(req_cols %in% names(df)))
+
+    # Determine which of the columns that need to be replicated
+    group_cols <- setdiff(names(df), req_cols)
+
+    # Determine which variables do not need to be extended
+    df %>%
+        filter(year < 1750) %>%
+        distinct(variable) ->
+        complete_early_yrs
+
+    df %>%
+        filter(year == 1750) %>%
+        filter(!variable %in% complete_early_yrs$variable) ->
+        values_1750
+
+    current_start_yr <- 1750
+    yrs <- 1745:(current_start_yr-1)
+    n <- length(yrs)
+    rows <- nrow(values_1750)
 
 
+    # Duplicate the data frame contents and add the years.
+    do.call(rbind, replicate(n, values_1750, simplify = FALSE))  %>%
+        mutate(year = rep(yrs, each = rows)) %>%
+        select(names(df)) ->
+        missing_data
 
+    # Add the missing data to the data frame.
+    missing_data %>%
+        rbind(df) %>%
+        arrange(variable, year) ->
+        out
 
-# 3. Column names --------------------------------------------------------------
+    return(out)
+
+}
+
+# 3. Constants -----------------------------------------------------------------
 
 # The required names for csv written out at different points.
 HEADERS <- list()
 HEADERS[["L0"]] <- c("source", "variable", "sector", "year", "value", "units")
 HEADERS[["L1"]] <- c("variable", "sector", "year", "value", "source")
+
+# Final year of emissions data
+FINAL_YEAR <- 2022
+
 

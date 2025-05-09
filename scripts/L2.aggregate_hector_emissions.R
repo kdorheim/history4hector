@@ -8,8 +8,12 @@ source(here::here("scripts", "constants.R"))
 # Load data
 DIRS$INTERMED %>%
     list.files(pattern = "L1",
-               full.names = TRUE) %>%
-    read.csv ->
+               full.names = TRUE) ->
+    L1_files
+
+L1_files %>%
+    lapply(read.csv) %>%
+    do.call(what = "rbind") ->
     L1_data
 
 DIRS$MAPPING %>%
@@ -27,8 +31,12 @@ L1_data %>%
               by = join_by("variable", "sector", "source")) %>%
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
-    mutate(units = getunits(variable)) ->
+    mutate(units = getunits(variable)) %>%
+    filter(year <= FINAL_YEAR) ->
     global_total
+
+
+
 
 
 
@@ -36,10 +44,10 @@ L1_data %>%
 # Add natural CH4 chunk
 # Add natural N2O chunk
 
+global_total %>%
+    extend_to_1745 ->
+    output
 
-
-
-output <- global_total
 
 # 2. Save Output ---------------------------------------------------------------
 
@@ -47,4 +55,30 @@ output %>%
     check_req_names(req_cols = HEADERS$L2) %>%
     write.csv(file = file.path(DIRS$INTERMED, "L2.hector_inputs.csv"),
               row.names = FALSE)
+
+
+
+# Z. Quality Check -------------------------------------------------------------
+
+if(FALSE){
+
+source("scripts/dev/hector_comp_data.R")
+
+em <- EMISSIONS_CH4()
+
+
+hector_comp %>%
+    filter(variable == em) ->
+    comp_to_plot
+
+output %>%
+    filter(variable == em) ->
+    to_plot
+
+ggplot() +
+    geom_line(data = comp_to_plot, aes(year, value, color = "old")) +
+    geom_line(data = to_plot, aes(year, value, color = "new")) +
+    labs(title = em)
+}
+
 

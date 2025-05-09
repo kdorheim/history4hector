@@ -2,7 +2,6 @@
 # comparison.
 # 0. Set Up --------------------------------------------------------------------
 # Load the project constants and basic functions
-source(here::here("scripts", "constants.R"))
 
 
 # 1. Import the emissions data -------------------------------------------------
