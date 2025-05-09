@@ -1,23 +1,24 @@
-# Description: Read in the CEDS data and format.
+# Description: Read in the CEDS data and format for downstream use.
 
 # 0. Set Up --------------------------------------------------------------------
 
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
-# Define Helper Functions -----
+# Define Helper Functions
 # Find all the global sector ceds emissions for a specific release version! Error
 # will be thrown if the data has not already been downloaded.
 # Args
 #   DIR: str path to where the ceds data files live
 #   ceds_v: str of the release version, I think it might typically be a date
 # Returns the str of the full ceds path
-find_my_ceds_files <- function(DIR, ceds_v = "v2024_07_08"){
+find_my_ceds_files <- function(DIR, ceds_v = "v_2025_03_18"){
+
 
     assert_that(dir.exists(DIR))
 
     # Find all the possible ceds files
-    all_ceds_files <- list.files(DIR, pattern = "CEDS")
+    all_ceds_files <- list.files(DIR, pattern = "CEDS", recursive = TRUE)
     assert_that(length(all_ceds_files) >= 1, msg = "no CEDS files found")
 
     # Now check to see if there are global emissions by sector... it
@@ -38,35 +39,31 @@ find_my_ceds_files <- function(DIR, ceds_v = "v2024_07_08"){
 }
 
 
-# 1. Import Data ---------------------------------------------------------------
-# Load the mapping file
-mapping <- read.csv(list.files(DIRS$MAPPING, pattern = "L0.CEDS_hector_mapping",
-                               full.names = TRUE), comment.char = "#")
+# 1. Main Chunk ----------------------------------------------------------------
 
-# Read in all the raw data
+# Find and import all the data files.
 find_my_ceds_files(DIRS$RAW_DATA) %>%
     lapply(read.csv) %>%
     do.call(what = "bind_rows") ->
-    ceds_raw_data
+    ceds_wide_data
 
-# 3. Total Global Emissions ----------------------------------------------------
-ceds_raw_data %>%
-    # subset the data so that it only includes the emissions we are interested.
-    filter(em %in% mapping$ceds_variable) %>%
-    # Change from wide to long format and make sure that the years are integers
-    # in preparation for joining with the mapping file.
+# Change from wide to long format.
+ceds_wide_data %>%
     pivot_longer(starts_with("X"), names_to = "year") %>%
-    mutate(year = as.integer(gsub(replacement = "", x = year, pattern = "X"))) %>%
-    rename(ceds_variable = em, ceds_units = units) %>%
-    inner_join(mapping, by = join_by(ceds_variable, ceds_units)) %>%
-    # Convert to Hector units and aggregate!
-    mutate(value = value * cf) %>%
-    summarise(value = sum(value), .by = c("hector_variable", "year", "hector_units",
-                                          "hector_total", "hector_sector")) %>%
-    select(year, total = hector_total, sector = hector_sector,
-           variable = hector_variable, value, units = hector_units) %>%
-    mutate(source = "CEDS") ->
-    out
+    mutate(year = as.integer(gsub(replacement = "",
+                                  x = year,
+                                  pattern = "X"))) %>%
+    mutate(source = "CEDS",
+           units = format_units_fxn(units)) %>%
+    rename(variable = em) ->
+    output
 
-write.csv(out, file = file.path(DIRS$INTERMED, "L0.CEDS_emissions.csv"), row.names = FALSE)
+# 2. Save Output ---------------------------------------------------------------
+
+output %>%
+    check_req_names(req_cols = HEADERS$L0) %>%
+    write.csv(file = file.path(DIRS$INTERMED, "L0.CEDS_raw.csv"),
+              row.names = FALSE)
+
+
 
