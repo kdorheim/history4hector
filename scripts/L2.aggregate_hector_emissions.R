@@ -119,13 +119,16 @@ natural_n2o %>%
                    units = getunits(NAT_EMISSIONS_N2O()))) ->
     final_natural_n2o
 
+# --- Natural CH4 Emissions ----------------------------------------------------
+
+# TODO this is a place holder for now because Hector does not have the capability
+# to do time varying Natural CH4 emissions...
 
 
 
 
-# TODO
-# Add natural CH4 chunk
-# Add natural N2O chunk
+
+# --- Consolidate Emissions ----------------------------------------------------
 
 global_total %>%
     bind_rows(final_natural_n2o) ->
@@ -161,95 +164,6 @@ if(FALSE){
         geom_line(data = comp_to_plot, aes(year, value, color = "old")) +
         geom_line(data = to_plot, aes(year, value, color = "new")) +
         labs(title = em)
-
-
-    n2o_emiss_new <- n2o_emiss
-
-    # Compare the N2O concentrations we are targeting vs. our
-    # natural and ffi N2O emissions.
-    ini <- system.file(package = "hector", "input/hector_ssp245.ini")
-    hc <- newcore(ini)
-    setvar(hc,
-           dates = natural_n2o$year,
-           var = NAT_EMISSIONS_N2O(),
-           values = natural_n2o$value,
-           unit = getunits(NAT_EMISSIONS_N2O()))
-    reset(hc)
-    setvar(hc,
-           dates = n2o_emiss$year,
-           var = EMISSIONS_N2O(),
-           values = n2o_emiss$value,
-           unit = getunits(EMISSIONS_N2O()))
-    reset(hc)
-    run(hc)
-    fetchvars(hc, 1745:2023, vars = c(CONCENTRATIONS_N2O())) -> out
-    # did confirm that the natural emissions are being passed in
-    # properly, Is there are
-    fetchvars(hc, 1745:2023, vars = c(NAT_EMISSIONS_N2O())) -> out_nat_new
-
-    ggplot() +
-        geom_line(data = out, aes(year, value)) +
-        geom_line(data = n2o_conc, aes(year, value, color = "true"))
-
-
-    plot(natural_n2o$value)
-    plot(n2o_emiss$value)
-
-
-
-    ini <- system.file(package = "hector", "input/hector_ssp245.ini")
-    hc <- newcore(ini)
-    run(hc)
-    fetchvars(hc, 1745:2023, vars = c(CONCENTRATIONS_N2O())) -> out1
-
-    system.file(package = "hector", "input/tables/ssp245_emiss-constraints_rf.csv") %>%
-        read.csv(comment.char = ";") %>%
-        select(year = Date, value = N2O_constrain) %>%
-        filter(year <= 2023) ->
-        n2o_conc
-
-    system.file(package = "hector", "input/tables/ssp245_emiss-constraints_rf.csv") %>%
-        read.csv(comment.char = ";") %>%
-        select(year = Date, value = N2O_emissions) ->
-        n2o_emiss
-
-    n2o_emiss_og <- n2o_emiss
-
-    # Calculate natural N2O emissions
-    natural_n2o <- get_natural_N2O(n2o_conc, n2o_emiss)
-
-    setvar(hc,
-           dates = natural_n2o$year,
-           var = NAT_EMISSIONS_N2O(),
-           values = natural_n2o$value,
-           unit = getunits(NAT_EMISSIONS_N2O()))
-    reset(hc)
-    run(hc)
-    fetchvars(hc, 1745:2023, vars = c(CONCENTRATIONS_N2O())) -> out2
-    fetchvars(hc, 1745:2023, vars = c(NAT_EMISSIONS_N2O())) -> out_nat
-
-    # it seems to be working for the original N2O stuff.. why is it not working
-    # with the
-    ggplot() +
-        geom_line(data = out1, aes(year, value, color = "original")) +
-        geom_line(data = out2, aes(year, value, color = "new")) +
-        geom_line(data = n2o_conc, aes(year, value, color = "target")) +
-        geom_hline(yintercept = N2O_conc_0)
-
-
-    # so the difference is in the behavior of of the early future...
-    # the natural emissions in the
-
-
-    plot(out_nat$value)
-    lines(out_nat_new$value, col = "red")
-
-    N2O_conc_0 <- 273.87
-    ggplot() +
-        geom_line(data = n2o_emiss_og, aes(year, value, color = "og")) +
-        geom_line(data = n2o_emiss_new, aes(year, value, color = "new"))
-
-
 
 
 }

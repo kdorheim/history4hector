@@ -22,6 +22,7 @@ file.path(DIRS$RAW_DATA, "ClimateIndicator-data-9612b1d",
           "ghg_concentrations.csv") %>%
     read.csv() %>%
     rename(year = timebound_lower) %>%
+   # filter(year >= 1850) %>%
     pivot_longer(-year, names_to = "variable") %>%
     filter(variable %in% vars_to_save) %>%
     arrange(variable, year) ->
@@ -31,6 +32,8 @@ file.path(DIRS$RAW_DATA, "ClimateIndicator-data-9612b1d",
 add_missing_data(raw_ghg_missing,
                  expected_years = min(raw_ghg_missing$year):FINAL_YEAR,
                  fill = 1) %>%
+    # TODO this function does not work when the data is
+    # starts at 1850
     extend_to_1745 %>%
     mutate(variable = paste0(variable, "_concentration")) ->
     obs_ghg
