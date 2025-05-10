@@ -138,6 +138,11 @@ add_missing_data <- function(df, expected_years, fill = NA){
 
     missing_yrs <- setdiff(expected_years, df$year)
 
+    if(length(missing_yrs) == 0){
+        return(df)
+    }
+
+
     ids <- setdiff(names(df), c("year", "value"))
     meta_data <- distinct(df[, ids])
     n <- nrow(meta_data)
