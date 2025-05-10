@@ -124,6 +124,76 @@ extend_to_1745 <- function(df){
 
 }
 
+
+
+
+
+# Add data for missing years
+# Args
+#   df: data.frame emissions
+#   expected_years: vector of the expected years, that might be missing
+#   fill: code used to fill in the missing years, NA, 1 (linear)
+# Return: data.frame including entries of all years
+add_missing_data <- function(df, expected_years, fill = NA){
+
+    missing_yrs <- setdiff(expected_years, df$year)
+
+    if(length(missing_yrs) == 0){
+        return(df)
+    }
+
+
+    ids <- setdiff(names(df), c("year", "value"))
+    meta_data <- distinct(df[, ids])
+    n <- nrow(meta_data)
+
+    replicate(length(missing_yrs), meta_data, simplify = FALSE) %>%
+        do.call(what = "rbind") %>%
+        mutate(year = rep(missing_yrs, each = n),
+               value = NA) ->
+        missing_data
+
+    df %>%
+        rbind(missing_data) %>%
+        arrange(variable, year) ->
+        data_w_NAs
+
+    if(is.na(fill)){
+
+        # If the fill rule is set to NA return the data
+        # frame with the NAs.
+        return(data_w_NAs)
+
+    } else if (fill == 1){
+
+        # Following the fill rule of 1 use a linear regression.
+
+        # Categorize by the unique meta data information.
+        times <- nrow(data_w_NAs) / nrow(meta_data)
+        group_vec <- rep(LETTERS[1:n], each = times)
+        df_split <- split(data_w_NAs, group_vec)
+
+        # Linear regression
+        lapply(df_split, function(d){
+
+            to_replace <- d$year[which(is.na(d$value))]
+            out <- approx(x = d$year, y = d$value, xout = to_replace)
+            d$value[which(is.na(d$value))] <- out$y
+
+            return(d)
+
+        }) %>%
+            do.call(what = "rbind") ->
+            out
+
+        return(out)
+
+    } else {
+
+        stop("capability not implemented yet")
+    }
+
+}
 # 3. Constants -----------------------------------------------------------------
 
 # The required names for csv written out at different points.
