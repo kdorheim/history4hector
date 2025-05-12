@@ -221,7 +221,7 @@ if(FALSE){
     source("scripts/dev/hector_comp_data.R")
 
     # Compare new emissions vs. the older ones..
-    em <- FFI_EMISSIONS()
+    em <- LUC_EMISSIONS()
 
     hector_comp %>%
         filter(variable == em) ->
@@ -235,6 +235,35 @@ if(FALSE){
         geom_line(data = comp_to_plot, aes(year, value, color = "old")) +
         geom_line(data = to_plot, aes(year, value, color = "new")) +
         labs(title = em)
+
+
+
+    hc <- newcore(system.file(package = "hector", "input/hector_ssp245.ini"))
+    run(hc, runtodate = 2023)
+    out1 <- fetchvars(hc, dates = 1745:2023, GLOBAL_TAS())
+
+
+    setvar(hc, dates = to_plot$year,
+           var = LUC_EMISSIONS(),
+           values = to_plot$value,
+           unit = getunits(LUC_EMISSIONS()))
+    reset(hc)
+    run(hc)
+    out2 <- fetchvars(hc, dates = 1745:2023, GLOBAL_TAS())
+
+    out1$scenario <- "old"
+    out2$scenario <- "new"
+
+
+    ggplot() +
+        geom_line(data = out1, aes(year, value, color = scenario)) +
+        geom_line(data = out2, aes(year, value, color = scenario)) +
+        labs(title = paste0("Global TAS using difference LUC emissions"),
+             y = "Temp Anomoly", x = NULL)
+
+
+
+
 
 
 }
