@@ -628,3 +628,4 @@ NH3,Emissions NH3 Biomass Burning,NH3_emissions,BB4CMIP
 VOC,Emissions VOC Biomass Burning,NMVOC_emissions,BB4CMIP
 OC,Emissions OC Biomass Burning,OC_emissions,BB4CMIP
 Sulfur,Emissions Sulfur Biomass Burning,SO2_emissions,BB4CMIP
+land-use change emissions,land-use change emissions,luc_emissions,GCP

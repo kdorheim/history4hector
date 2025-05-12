@@ -93,6 +93,77 @@ L1_data %>%
     global_total
 
 
+# --- CO2 Emissions ------------------------------------------------------------
+# There are some extra rules for the carbon cycle emissions
+# 1. the Global Carbon Project emissions must be extended until 1745 but
+#       this cannot be done with the regular extend_to_1745 since we need
+#       to fill in emissions from 1745 to 1850.
+# 2. they must be strictly positive and we need to add the update emissions
+#       as well.
+
+global_total %>%
+    filter(variable == LUC_EMISSIONS()) %>%
+    pull(year) ->
+    luc_emissions_yrs
+
+# Determine which years of data we are missing from the luc emissions
+missing_yrs <- setdiff(1745:FINAL_YEAR, luc_emissions_yrs)
+
+global_total %>%
+    filter(variable == LUC_EMISSIONS()) ->
+    incomplete_LUC_EMISS
+
+
+# 1745 LUC EMISSIONS from the CMIP6 era Hector inputs.
+start_value <- 0.0812
+end_yr            <- max(missing_yrs)
+end_value         <- incomplete_LUC_EMISS$value[incomplete_LUC_EMISS$year == end_yr+1]
+missing_yr_length <- length(missing_yrs)
+
+early_luc_emissions <- data.frame(x = c(1, missing_yr_length),
+                                  y = c(start_value, end_value))
+
+fit <- nls(data = early_luc_emissions, y ~ start_value * (1 + b)^x, start = list(b = 0.01))
+extrapolated_vals <- predict(fit, newdata = data.frame(x = 1:missing_yr_length))
+
+data.frame(year = missing_yrs,
+                     variable = LUC_EMISSIONS(),
+                     value = extrapolated_vals,
+                     units = getunits(LUC_EMISSIONS())) ->
+    missing_luc
+
+
+# Add the missing luc emissions to the global total.
+global_total %>%
+    rbind(missing_luc) %>%
+    arrange(variable, year) ->
+    global_total
+
+
+# Confirm that the LUC and FFI emission are strictly positive
+global_total %>%
+    filter(variable %in% c(LUC_EMISSIONS(), FFI_EMISSIONS())) %>%
+    pull(value) ->
+    vals
+
+# TODO there is a more sophisticated way to handle this but
+# for now if all the emissions are strictly positive we can then
+# add in the uptake carbon variables.
+stopifnot(all(vals > 1e-8))
+
+n <- length(1745:FINAL_YEAR)
+data.frame(year = rep(1745:FINAL_YEAR, each = 2),
+           value = 0,
+           variable = rep(c(DACCS_UPTAKE(), LUC_UPTAKE()), n/2)) %>%
+    mutate(units = getunits(variable)) %>%
+    arrange(variable, year) ->
+    c_uptake
+
+global_total %>%
+    rbind(c_uptake) ->
+    global_total
+
+
 # --- Natural N2O emissions ----------------------------------------------------
 # Calculate the natural N2O emissions from the N2O concentration observations
 # and the anthropogenic N2O emissions.
@@ -150,7 +221,7 @@ if(FALSE){
     source("scripts/dev/hector_comp_data.R")
 
     # Compare new emissions vs. the older ones..
-    em <- EMISSIONS_CH4()
+    em <- LUC_EMISSIONS()
 
     hector_comp %>%
         filter(variable == em) ->
@@ -164,6 +235,35 @@ if(FALSE){
         geom_line(data = comp_to_plot, aes(year, value, color = "old")) +
         geom_line(data = to_plot, aes(year, value, color = "new")) +
         labs(title = em)
+
+
+
+    hc <- newcore(system.file(package = "hector", "input/hector_ssp245.ini"))
+    run(hc, runtodate = 2023)
+    out1 <- fetchvars(hc, dates = 1745:2023, GLOBAL_TAS())
+
+
+    setvar(hc, dates = to_plot$year,
+           var = LUC_EMISSIONS(),
+           values = to_plot$value,
+           unit = getunits(LUC_EMISSIONS()))
+    reset(hc)
+    run(hc)
+    out2 <- fetchvars(hc, dates = 1745:2023, GLOBAL_TAS())
+
+    out1$scenario <- "old"
+    out2$scenario <- "new"
+
+
+    ggplot() +
+        geom_line(data = out1, aes(year, value, color = scenario)) +
+        geom_line(data = out2, aes(year, value, color = scenario)) +
+        labs(title = paste0("Global TAS using difference LUC emissions"),
+             y = "Temp Anomoly", x = NULL)
+
+
+
+
 
 
 }
