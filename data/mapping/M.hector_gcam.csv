@@ -1,4 +1,4 @@
-# Mapping file for sectoral emisisons to Hector global total emissions,,,
+# Mapping file for emisisons from mulitple sources to the global total values required for the gcam hector csv input table,,,
 variable,sector,hector_variable,source
 BC,1A1a_Electricity-autoproducer,BC_emissions,CEDS
 BC,1A1a_Electricity-public,BC_emissions,CEDS

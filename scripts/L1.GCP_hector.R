@@ -9,7 +9,7 @@ source(here::here("scripts", "constants.R"))
 
 # Load data
 DIRS$MAPPING %>%
-    list.files(pattern = "L0.GCP_hector_mapping.csv",
+    list.files(pattern = "M.GCP_hector.csv",
                full.names = TRUE) %>%
     read.csv(comment.char = "#") %>%
     mutate(units = format_units_fxn(units)) ->

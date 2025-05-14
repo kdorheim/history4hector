@@ -1,3 +1,4 @@
 https://globalcarbonbudgetdata.org/downloads/jGJH0-data/Global_Carbon_Budget_2024_v1.0.xlsx
 https://zenodo.org/records/13752654/files/Guetschow_et_al_2024a-PRIMAP-hist_v2.6_final_13-Sep-2024.csv
 https://zenodo.org/records/15218936/files/gfed-bb4cmip_cmip7_global_0011.csv
+https://gitlab.com/rcmip/rcmip/-/raw/master/data/protocol/rcmip-radiative-forcing-annual-means-v5-1-0.csv

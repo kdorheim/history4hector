@@ -13,7 +13,7 @@ DIRS$INTERMED %>%
     bb4cmip_raw
 
 DIRS$MAPPING %>%
-    list.files(pattern = "L1.BB4CMIP_hector_mapping.csv",
+    list.files(pattern = "M.BB4CMIP_hector.csv",
                full.names = TRUE) %>%
     read.csv(comment.char = "#") %>%
     mutate(units = format_units_fxn(units)) ->

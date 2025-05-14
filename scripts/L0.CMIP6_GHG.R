@@ -15,7 +15,7 @@ system.file(package = "hector", "input/tables/ssp245_emiss-constraints_rf.csv") 
     filter(Date <= 2014) %>%
     select(year = Date, N2O_concentration = N2O_constrain, CH4_concentration = CH4_constrain) %>%
     pivot_longer(-year, names_to = "variable") %>%
-    mutate(units = getunits(variable)) ->
+    mutate(units = "ppbv") ->
     output
 
 # 2. Save Output ---------------------------------------------------------------

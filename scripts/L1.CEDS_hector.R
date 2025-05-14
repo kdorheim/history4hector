@@ -13,7 +13,7 @@ DIRS$INTERMED %>%
     ceds_raw
 
 DIRS$MAPPING %>%
-    list.files(pattern = "L1.CEDS_hector_mapping.csv",
+    list.files(pattern = "M.CEDS_hector.csv",
                full.names = TRUE) %>%
     read.csv(comment.char = "#") %>%
     mutate(units = format_units_fxn(units)) ->

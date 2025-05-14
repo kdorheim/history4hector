@@ -30,7 +30,7 @@ file.path(DIRS$RAW_DATA, "ClimateIndicator-data-9612b1d",
 
 # Fill in missing data using linear interpolation.
 add_missing_data(raw_ghg_missing,
-                 expected_years = min(raw_ghg_missing$year):FINAL_YEAR,
+                 expected_years = min(raw_ghg_missing$year):FINAL_HIST_YEAR,
                  fill = 1) %>%
     # TODO this function does not work when the data is
     # starts at 1850

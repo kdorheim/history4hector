@@ -1,6 +1,5 @@
 # Map Global Carbon Project Budget emissions to hector units ,,,,,
 # cf is the conversion factor from GCP to Hector,,,,,
-# hector_sector indicates if being mapped to a sector or global total (0),,,,,
 variable,units,cf,hector_variable,hector_units,notes_on_cf
 land-use change emissions,Gt C/yr,1,luc_emissions,Pg C/yr,
 fossil emissions excluding carbonation,Gt C/yr,1,ffi_emissions,Pg C/yr,

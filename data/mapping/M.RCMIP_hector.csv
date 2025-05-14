@@ -1,0 +1,6 @@
+# Map RCMIP (CMIP6 era inputs) to Hector ,,,,,
+# cf is the conversion factor from BB4CMIP to Hector,,,,,
+#  hector_sector = 0 indicates that the emissions are total global emissions other with the emissions are incomplete,,,,,
+variable,units,cf,hector_variable,hector_units,cf_notes
+Effective Radiative Forcing|Natural|Volcanic,W/m^2,1,SV,Wm-2, 
+Effective Radiative Forcing|Anthropogenic|Albedo Change,W/m^2,1,RF_albedo,Wm-2,
