@@ -11,7 +11,7 @@ source(here::here("scripts", "constants.R"))
 
 
 # 1. Main Chunk ----------------------------------------------------------------
-
+# --- GHG ----------------------------------------------------------------------
 # Determine which variables to save
 vars_to_save <- c("CH4", "N2O")
 
@@ -20,28 +20,39 @@ file.path(DIRS$RAW_DATA, "ClimateIndicator-data-9612b1d",
           "data",
           "greenhouse_gas_concentrations",
           "ghg_concentrations.csv") %>%
-    read.csv() %>%
+    read.csv %>%
     rename(year = timebound_lower) %>%
-   # filter(year >= 1850) %>%
+    select(-c(time, timebound_upper)) %>%
     pivot_longer(-year, names_to = "variable") %>%
-    filter(variable %in% vars_to_save) %>%
+   filter(variable %in% vars_to_save) %>%
     arrange(variable, year) ->
     raw_ghg_missing
 
-# Fill in missing data using linear interpolation.
-add_missing_data(raw_ghg_missing,
-                 expected_years = min(raw_ghg_missing$year):FINAL_HIST_YEAR,
-                 fill = 1) %>%
+raw_ghg_missing %>%
+    split(raw_ghg_missing$variable) %>%
+    lapply(add_missing_data, expected_years = 1750:FINAL_HIST_YEAR, fill = 1) %>%
+    bind_rows %>%
     # TODO this function does not work when the data is
     # starts at 1850
     extend_to_1745 %>%
-    mutate(variable = paste0(variable, "_concentration")) ->
+    mutate(variable = paste0(variable, "_concentration")) %>%
+    # Manually adding the units according to the ClimateIndicator data file.
+    mutate(units = "ppt") %>%
+    mutate(units = if_else(variable == "CO2_concentration", "ppm", units)) %>%
+    mutate(units = if_else(variable %in% c("CH4_concentration", "N2O_concentration"), "ppb", units)) ->
     obs_ghg
+
+obs_ghg %>%
+    mutate(sector = "WORLD",
+           source = "ClimateIndicator") ->
+    output
+
 
 # 2. Save Output ---------------------------------------------------------------
 
-obs_ghg %>%
-    write.csv(file = file.path(DIRS$INTERMED, "L0.climate_indicators.csv"),
+output %>%
+    check_req_names(req_cols = HEADERS$L0) %>%
+    write.csv(file = file.path(DIRS$INTERMED, "L0.ClimateIndicators_raw.csv"),
               row.names = FALSE)
 
 
