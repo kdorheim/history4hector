@@ -47,6 +47,66 @@ sapply(DIRS,
 
 # 2. Define Helper Functions ---------------------------------------------------
 
+
+# Write a hector input table Save the hector csv files into the proper hector format
+# Args
+#   x: data table containing Hector input values
+#   required: str vector of the required variables that must be included in the table
+#   write_to: str directory to write the hector csv output to
+#   save_as: string of the csv file name to save
+# Return: str file name
+write_hector_csv <- function(x,
+                             required=NULL,
+                             write_to,
+                             save_as){
+
+    # Format and save the emissions and concentration constraints in the csv files
+    # in the proper Hector table input file.
+    assert_that(dir.exists(write_to))
+    assert_that(has_name(x, c("year", "variable", "units", "value")))
+    x <- as.data.table(x)
+
+    # Create the file name
+    fname <- file.path(write_to, save_as)
+
+    if(!is.null(required)){
+        missing <- !required %in% unique(x[["variable"]])
+        assert_that(all(!missing), msg = paste("Missing required variable(s):", paste0(required[missing], collapse = ", ")))
+    }
+
+    # Transform the data frame into the wide format that Hector expects.
+    input_data <- dcast(as.data.table(x)[, list(Date = year, variable, value)], Date ~ variable)
+
+    # Add the header information to the csv table.
+    # TODO look into a more efficient way to do this, one that does not
+    # require intermediate products to be written out to the disk.
+    readr::write_csv(input_data, fname, append = FALSE, col_names = TRUE)
+    lines <- readLines(fname)
+
+    # Format a list of units that will be used in the header.
+    vars <- names(input_data)
+    var_units <- getunits(vars[-1])
+    units_list <- paste(c('; UNITS:', var_units), collapse = ', ')
+
+    git_tag <- substr(system("git rev-parse HEAD", intern=TRUE), start = 1, stop = 15)
+    create_info <-  c(paste0('; created by history4hector on ', date(),
+                             " commit ", git_tag))
+    final_lines <- append(c(paste0('; TODO add documenation'),
+                            paste0("; commit ", git_tag),
+                            paste0("; date ", date()),
+                            units_list),
+                          lines)
+    writeLines(final_lines, fname)
+    return(fname)
+
+}
+
+
+
+
+
+
+
 # Format the units string
 # Args
 #   str: unit string

@@ -95,7 +95,7 @@ get_natural_N2O <- function(n2o_conc, total_emiss){
 # Aggregate to global emissions. Note that there are some additional
 # variables that are missing that need to be handled individually.
 L1_data %>%
-    left_join(mapping,
+    inner_join(mapping,
               by = join_by("variable", "sector", "source"), relationship = "many-to-many") %>%
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
@@ -124,7 +124,7 @@ natural_n2o %>%
 
 natural_n2o %>%
     bind_rows(
-        data.frame(year = max(natural_n2o$year):2300,
+        data.frame(year = (max(natural_n2o$year)+1):2300,
                    value = future_value,
                    variable = NAT_EMISSIONS_N2O(),
                    units = getunits(NAT_EMISSIONS_N2O()))) ->
@@ -149,7 +149,8 @@ global_total %>%
 base_yrs <- 1745:1750
 
 global_total %>%
-    mutate(value = if_else(year %in% base_yrs & units == "W/m2", 0, value)) ->
+    mutate(value = if_else(year %in% base_yrs & units == "W/m2", 0, value)) %>%
+    na.omit ->
     global_total
 
 
@@ -174,6 +175,8 @@ output %>%
 # Save the input table. This will also ensure that all the variables
 # have all the data for all the years.
 
+write_hector_csv(x = output, required = NON_GCAM_EMISS,
+                 write_to = DIRS$TABLES, save_as = "default_emissions.csv")
 
 
 # Z. Quality Check -------------------------------------------------------------

@@ -132,7 +132,8 @@ output %>%
     write.csv(file = file.path(DIRS$INTERMED, "L2.hector_gcam_inputs.csv"),
               row.names = FALSE)
 
-
+write_hector_csv(x = output, required = GCAM_EMISS,
+                 write_to = DIRS$TABLES, save_as = "gcam_emissions.csv")
 
 # Z. Quality Check -------------------------------------------------------------
 
