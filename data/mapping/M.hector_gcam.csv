@@ -629,3 +629,13 @@ VOC,Emissions VOC Biomass Burning,NMVOC_emissions,BB4CMIP
 OC,Emissions OC Biomass Burning,OC_emissions,BB4CMIP
 Sulfur,Emissions Sulfur Biomass Burning,SO2_emissions,BB4CMIP
 land-use change emissions,land-use change emissions,luc_emissions,GCP
+C2F6_emissions,ssp245,C2F6_emissions,HectorV3
+CF4_emissions,ssp245,CF4_emissions,HectorV3
+HFC125_emissions,ssp245,HFC125_emissions,HectorV3
+HFC134a_emissions,ssp245,HFC134a_emissions,HectorV3
+HFC143a_emissions,ssp245,HFC143a_emissions,HectorV3
+HFC227ea_emissions,ssp245,HFC227ea_emissions,HectorV3
+HFC23_emissions,ssp245,HFC23_emissions,HectorV3
+HFC245fa_emissions,ssp245,HFC245fa_emissions,HectorV3
+HFC32_emissions,ssp245,HFC32_emissions,HectorV3
+SF6_emissions,ssp245,SF6_emissions,HectorV3

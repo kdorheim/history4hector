@@ -2,3 +2,19 @@
 variable,sector,hector_variable,source
 Effective Radiative Forcing|Natural|Volcanic,ssp245,SV,RCMIP
 Effective Radiative Forcing|Natural|Volcanic,ssp245,RF_albedo,RCMIP
+CCl4_emissions,ssp245,CCl4_emissions,HectorV3
+CFC113_emissions,ssp245,CFC113_emissions,HectorV3
+CFC114_emissions,ssp245,CFC114_emissions,HectorV3
+CFC115_emissions,ssp245,CFC115_emissions,HectorV3
+CFC11_emissions,ssp245,CFC11_emissions,HectorV3
+CFC12_emissions,ssp245,CFC12_emissions,HectorV3
+CH3Br_emissions,ssp245,CH3Br_emissions,HectorV3
+CH3CCl3_emissions,ssp245,CH3CCl3_emissions,HectorV3
+CH3Cl_emissions,ssp245,CH3Cl_emissions,HectorV3
+HCFC141b_emissions,ssp245,HCFC141b_emissions,HectorV3
+HCFC142b_emissions,ssp245,HCFC142b_emissions,HectorV3
+HCFC22_emissions,ssp245,HCFC22_emissions,HectorV3
+HFC4310_emissions,ssp245,HFC4310_emissions,HectorV3
+halon1211_emissions,ssp245,halon1211_emissions,HectorV3
+halon1301_emissions,ssp245,halon1301_emissions,HectorV3
+halon2402_emissions,ssp245,halon2402_emissions,HectorV3

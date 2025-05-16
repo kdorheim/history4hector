@@ -46,7 +46,7 @@ L1_data %>%
     global_total
 
 
- # --- CO2 Emissions ------------------------------------------------------------
+# --- CO2 Emissions ------------------------------------------------------------
 # There are some extra rules for the carbon cycle emissions
 # 1. the Global Carbon Project emissions must be extended until 1745 but
 #       this cannot be done with the regular extend_to_1745 since we need
@@ -116,7 +116,6 @@ global_total %>%
     na.omit ->
     global_total
 
-
 output <- global_total
 
 # 2. Save Output ---------------------------------------------------------------
@@ -127,9 +126,6 @@ stopifnot(length(extra_emiss) == 0)
 
 missing_vars <- setdiff(GCAM_EMISS, global_total$variable)
 stopifnot(length(missing_vars) == 0)
-
-
-
 
 output %>%
     check_req_names(req_cols = HEADERS$L2) %>%
