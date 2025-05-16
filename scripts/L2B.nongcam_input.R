@@ -23,7 +23,7 @@ L1_files %>%
     L1_data
 
 # There are some specific data that is required
-file.path(DIRS$INTERMED, "L0.climate_indicators.csv") %>%
+file.path(DIRS$INTERMED, "L0.ClimateIndicators_raw.csv") %>%
     read.csv ->
     conc_data
 
