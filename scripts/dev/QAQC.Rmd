@@ -1,0 +1,697 @@
+---
+title: "QAQC: Historical Emissions for GCAM-Hector Update"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+
+## Objective 
+
+Here let's compare the changes to the Hector inputs for GCAM-Hector as we update historical emissions with the releases of CEDS, the Global Carbon Project, and Open Burning Emissions. 
+
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(dev = "png",
+                      dpi = 300,
+                      echo = FALSE,
+                      fig.path="figures/")
+```
+
+
+```{r,  warning=FALSE, message=FALSE, echo = TRUE}
+# Load required packages
+library(dplyr)
+library(ggplot2)
+library(hector)
+theme_set(theme_bw())
+
+BASE_DIR <- here::here()
+
+FINAL_HIST_YEAR <- 2022
+YRS <- 1750:FINAL_HIST_YEAR
+```
+
+Which version of Hector is being used?
+
+```{r, echo=TRUE}
+packageVersion("hector")
+```
+
+
+```{r}
+
+file.path(BASE_DIR, "data", "dev", "single_variable_runs.csv") %>%  
+    read.csv -> 
+    single_variable_runs
+
+```
+
+
+## Run Hector 
+
+```{r}
+# The variables to save. 
+vars <- c("BC_emissions", "CH4_emissions", "CO_emissions", "ffi_emissions", 
+          "N2O_emissions", "NH3_emissions", "NMVOC_emissions", "NOX_emissions", 
+          "OC_emissions", "SO2_emissions", "RF_tot", "RF_CO2", 
+          "RF_N2O", "RF_H2O_strat", "RF_O3_trop", "RF_BC", "RF_OC", 
+          "RF_NH3", "RF_SO2", "RF_aci", "global_tas", "O3_concentration", 
+          "CO2_concentration", "N2O_concentration", "CH4_concentration", NBP(), NPP(), VEG_C())
+```
+
+
+```{r}
+ini <- system.file(package = "hector", "input/hector_ssp245.ini")
+hc  <- newcore(ini, name  ="default hector")
+run(hc, runtodate = FINAL_HIST_YEAR)
+out1 <- fetchvars(hc, dates = YRS, vars = vars)
+```
+
+```{r}
+ini <- file.path(BASE_DIR, "inputs", "hector-gcam.ini")
+hc  <- newcore(ini, name = "new hist.")
+run(hc, runtodate = FINAL_HIST_YEAR)
+out2 <- fetchvars(hc, dates = YRS, vars = vars)
+```
+
+
+```{r}
+to_plot <- rbind(out1, out2)
+```
+
+
+```{r}
+to_plot %>% 
+    filter(variable == GLOBAL_TAS()) %>% 
+    ggplot(aes(year, value, color = scenario)) + 
+    geom_line() + 
+    labs(y = "Deg C", 
+         x = NULL, 
+         title = "Global Temp.")
+```
+
+ 
+## RF_albedo
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_ALBEDO(), scenario == RF_ALBEDO()) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = RF_ALBEDO(), y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == RF_ALBEDO()) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == RF_ALBEDO()) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), y = "deg C", x = NULL)
+```
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+
+## SV
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == "SV", scenario == "SV") %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "SV Input", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == "SV") %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == "SV") -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), y = "deg C", x = NULL)
+```
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+The only difference in the volcanic RF input is that it is zero during Hector's 
+base year, which leads to a pretty constant offset of about 0.1 deg C. 
+
+## luc_emissions
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == LUC_EMISSIONS(), scenario ==  LUC_EMISSIONS()) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = LUC_EMISSIONS(), y = getunits(LUC_EMISSIONS()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == LUC_EMISSIONS()) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == LUC_EMISSIONS()) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", LUC_EMISSIONS()), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+
+## CH4_emissions
+
+```{r}
+var_of_intrest <- EMISSIONS_CH4()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == CONCENTRATIONS_CH4(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = CONCENTRATIONS_CH4(), subtitle = paste0("only change in ", var_of_intrest), y = "ppb", x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## N2O_emissions
+
+```{r}
+var_of_intrest <- EMISSIONS_N2O()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## OC_emissions
+
+
+```{r}
+var_of_intrest <- EMISSIONS_OC()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## N2O_natural_emissions
+
+
+```{r}
+var_of_intrest <- NAT_EMISSIONS_N2O()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## BC_emissions
+
+
+
+```{r}
+var_of_intrest <- EMISSIONS_BC()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## SO2_emissions
+
+
+
+```{r}
+var_of_intrest <- EMISSIONS_SO2()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## ffi_emissions
+
+
+```{r}
+var_of_intrest <- FFI_EMISSIONS()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## NMVOC_emissions
+
+
+```{r}
+var_of_intrest <- EMISSIONS_NMVOC()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## CO_emissions
+
+
+
+```{r}
+var_of_intrest <- EMISSIONS_CO()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+## NH3_emissions
+
+
+```{r}
+var_of_intrest <- EMISSIONS_NH3()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+
+## NOX_emissions
+
+
+```{r}
+var_of_intrest <- EMISSIONS_NOX()
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == var_of_intrest, scenario ==  var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = var_of_intrest, y = getunits(var_of_intrest), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == RF_TOTAL(), scenario == var_of_intrest) %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = "Total RF", y = getunits(RF_ALBEDO()), x = NULL)
+```
+
+```{r}
+single_variable_runs %>% 
+    filter(variable == GLOBAL_TAS(), scenario == var_of_intrest) -> 
+    compare 
+
+compare %>% 
+    ggplot() + 
+    geom_line(aes(year, value, color = "new")) + 
+    geom_line(aes(year, default, color = "default")) + 
+    labs(title = GLOBAL_TAS(), subtitle = paste0("only change in ", var_of_intrest), y = "deg C", x = NULL)
+```
+Summary stats between the differences in global temp. 
+
+```{r}
+summary(compare$abs_diff)
+```
+
+
+
+
+
