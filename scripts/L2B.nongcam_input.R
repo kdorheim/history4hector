@@ -95,7 +95,7 @@ get_natural_N2O <- function(n2o_conc, total_emiss){
 # Aggregate to global emissions. Note that there are some additional
 # variables that are missing that need to be handled individually.
 L1_data %>%
-    inner_join(mapping,
+    right_join(mapping,
               by = join_by("variable", "sector", "source"), relationship = "many-to-many") %>%
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
@@ -154,7 +154,10 @@ global_total %>%
     global_total
 
 
-output <- global_total
+global_total %>%
+    filter(year <= FINAL_FUT_YEAR) ->
+    output
+
 
 # 2. Save Output ---------------------------------------------------------------
 # First check to make sure that all of the required variables are present
@@ -185,5 +188,9 @@ if(FALSE){
 
     source("scripts/dev/hector_comp_data.R")
 
+    output %>%
+        filter(variable == RF_ALBEDO()) %>%
+        ggplot(aes(year, value)) +
+        geom_line()
 
 }

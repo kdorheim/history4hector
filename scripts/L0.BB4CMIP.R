@@ -67,6 +67,14 @@ emissions %>%
                             pattern = "\\|")) ->
     output
 
+
+
+output %>%
+    filter(variable == "Nx") %>% head()
+
+
+
+
 # 2. Save Output ---------------------------------------------------------------
 
 output %>%

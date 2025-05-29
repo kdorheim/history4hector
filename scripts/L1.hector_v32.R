@@ -23,7 +23,6 @@ to_keep <- c("Date", colnames(wide_results)[grepl(x = colnames(wide_results), pa
 wide_results[, to_keep] %>%
     pivot_longer(-Date) %>%
     select(year = Date, variable = name, value) %>%
-    filter(year <= FINAL_HIST_YEAR) %>%
     # Add the required information for L1
     mutate(source = "HectorV3",
            sector = "ssp245",

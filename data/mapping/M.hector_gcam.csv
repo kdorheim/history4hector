@@ -639,3 +639,4 @@ HFC23_emissions,ssp245,HFC23_emissions,HectorV3
 HFC245fa_emissions,ssp245,HFC245fa_emissions,HectorV3
 HFC32_emissions,ssp245,HFC32_emissions,HectorV3
 SF6_emissions,ssp245,SF6_emissions,HectorV3
+NOx,Emissions NOx Biomass Burning,NOX_emissions,BB4CMIP

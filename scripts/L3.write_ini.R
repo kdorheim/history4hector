@@ -37,5 +37,5 @@ new_lines <- gsub(x = ini[gcam_indx], pattern = "TABLE_NAME", replacement = gcam
 ini[gcam_indx] <- new_lines
 
 # 2. Save ini file -------------------------------------------------------------
-writeLines(ini, con = file.path(DIRS$TABLES, "hector-gcam.ini"))
+writeLines(ini, con = file.path(DIRS$INPUTS, "hector-gcam.ini"))
 

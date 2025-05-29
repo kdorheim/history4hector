@@ -36,6 +36,7 @@ DIRS <- list(
     RAW_DATA = file.path(BASE, "data", "raw-data"),
     MAPPING = file.path(BASE, "data", "mapping"),
     INTERMED = file.path(BASE, "data", "intermed"),
+    INPUTS = file.path(BASE, "inputs"),
     TABLES = file.path(BASE, "inputs", "tables")
 )
 
@@ -76,6 +77,9 @@ write_hector_csv <- function(x,
 
     # Transform the data frame into the wide format that Hector expects.
     input_data <- dcast(as.data.table(x)[, list(Date = year, variable, value)], Date ~ variable)
+
+    # Throw an error if any NAs are included in the data frame.
+    #stopifnot(any(is.na(input_data)))
 
     # Add the header information to the csv table.
     # TODO look into a more efficient way to do this, one that does not

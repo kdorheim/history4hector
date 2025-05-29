@@ -38,6 +38,13 @@ DIRS$MAPPING %>%
 L1_data %>%
     left_join(mapping,
               by = join_by("variable", "sector", "source")) %>%
+    #filter(variable == "NOx")
+
+
+
+
+
+
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
     mutate(units = getunits(variable)) %>%

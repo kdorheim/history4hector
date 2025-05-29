@@ -1,7 +1,7 @@
 # Mapping file for emisisons from mulitple sources to the global total values required by the non gcam hector input table,,,
 variable,sector,hector_variable,source
 Effective Radiative Forcing|Natural|Volcanic,ssp245,SV,RCMIP
-Effective Radiative Forcing|Natural|Volcanic,ssp245,RF_albedo,RCMIP
+Effective Radiative Forcing|Anthropogenic|Albedo Change,ssp245,RF_albedo,RCMIP
 CCl4_emissions,ssp245,CCl4_emissions,HectorV3
 CFC113_emissions,ssp245,CFC113_emissions,HectorV3
 CFC114_emissions,ssp245,CFC114_emissions,HectorV3

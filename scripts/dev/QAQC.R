@@ -18,7 +18,7 @@ vars <- c("BC_emissions", "CH4_emissions", "CO_emissions", "ffi_emissions",
           "RF_NH3", "RF_SO2", "RF_aci", "global_tas", "O3_concentration",
           "CO2_concentration", "N2O_concentration", "CH4_concentration", NBP(), NPP(), VEG_C())
 
-
+vars <- c(vars, GLOBAL_TAS(), RF_TOTAL())
 # Run default hector
 ini <- system.file(package = "hector", "input/hector_ssp245.ini")
 hc  <- newcore(ini, name  ="default hector")

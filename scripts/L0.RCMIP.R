@@ -16,6 +16,7 @@ stopifnot(file.exists(file))
 # Results to save - its unclear how we are going to save the future scenarios...
 REGN <- c("World")
 
+
 read.csv(file) %>%
     filter(Region %in% REGN) ->
     wide_data_forcing
