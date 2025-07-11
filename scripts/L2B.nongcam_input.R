@@ -95,8 +95,8 @@ get_natural_N2O <- function(n2o_conc, total_emiss){
 # Aggregate to global emissions. Note that there are some additional
 # variables that are missing that need to be handled individually.
 L1_data %>%
-    inner_join(mapping,
-              by = join_by("variable", "sector", "source")) %>%
+    right_join(mapping,
+              by = join_by("variable", "sector", "source"), relationship = "many-to-many") %>%
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
     mutate(units = getunits(variable)) %>%
@@ -124,7 +124,7 @@ natural_n2o %>%
 
 natural_n2o %>%
     bind_rows(
-        data.frame(year = max(natural_n2o$year):2300,
+        data.frame(year = (max(natural_n2o$year)+1):2300,
                    value = future_value,
                    variable = NAT_EMISSIONS_N2O(),
                    units = getunits(NAT_EMISSIONS_N2O()))) ->
@@ -149,8 +149,14 @@ global_total %>%
 base_yrs <- 1745:1750
 
 global_total %>%
-    mutate(value = if_else(year %in% base_yrs & units == "W/m2", 0, value)) ->
+    mutate(value = if_else(year %in% base_yrs & units == "W/m2", 0, value)) %>%
+    na.omit ->
     global_total
+
+
+global_total %>%
+    filter(year <= FINAL_FUT_YEAR) ->
+    output
 
 
 # 2. Save Output ---------------------------------------------------------------
@@ -162,19 +168,18 @@ stopifnot(length(extra_emiss) == 0)
 missing_vars <- setdiff(NON_GCAM_EMISS, global_total$variable)
 stopifnot(length(missing_vars) == 0)
 
+
 # Save a copy of the long format data frame for future reference.
 output %>%
     check_req_names(req_cols = HEADERS$L2) %>%
     write.csv(file = file.path(DIRS$INTERMED, "L2.hector_nongcam_inputs.csv"),
               row.names = FALSE)
 
-
 # Save the input table. This will also ensure that all the variables
 # have all the data for all the years.
 
-
-
-
+write_hector_csv(x = output, required = NON_GCAM_EMISS,
+                 write_to = DIRS$TABLES, save_as = "default_emissions.csv")
 
 
 # Z. Quality Check -------------------------------------------------------------
@@ -183,5 +188,9 @@ if(FALSE){
 
     source("scripts/dev/hector_comp_data.R")
 
+    output %>%
+        filter(variable == RF_ALBEDO()) %>%
+        ggplot(aes(year, value)) +
+        geom_line()
 
 }

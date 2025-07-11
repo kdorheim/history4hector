@@ -43,7 +43,7 @@ output %>%
 # Z. Quality Control -----------------------------------------------------------
 
 rcmip_raw %>%
-    filter(grepl(x = tolower(variable), pattern = "vol")) %>%
+    filter(grepl(x = tolower(variable), pattern = "alb")) %>%
 
     filter(sector == "historical-cmip5") %>%
     ggplot(aes(year, value, color = variable)) +

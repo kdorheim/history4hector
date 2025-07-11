@@ -14,7 +14,9 @@ L1_files <- c("L1.CEDS_hector.R",
 L2_files <- c("L2A.gcam_input_csv.R",
               "L2B.nongcam_input.R")
 
-files <- c(L0_files, L1_files, L2_files)
+L3_files <- c("L3.write_ini.R")
+
+files <- c(L0_files, L1_files, L2_files, L3_files)
 
 for(f in files){
     print(f)

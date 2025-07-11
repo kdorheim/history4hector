@@ -38,6 +38,13 @@ DIRS$MAPPING %>%
 L1_data %>%
     left_join(mapping,
               by = join_by("variable", "sector", "source")) %>%
+    #filter(variable == "NOx")
+
+
+
+
+
+
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
     mutate(units = getunits(variable)) %>%
@@ -46,7 +53,7 @@ L1_data %>%
     global_total
 
 
- # --- CO2 Emissions ------------------------------------------------------------
+# --- CO2 Emissions ------------------------------------------------------------
 # There are some extra rules for the carbon cycle emissions
 # 1. the Global Carbon Project emissions must be extended until 1745 but
 #       this cannot be done with the regular extend_to_1745 since we need
@@ -116,7 +123,6 @@ global_total %>%
     na.omit ->
     global_total
 
-
 output <- global_total
 
 # 2. Save Output ---------------------------------------------------------------
@@ -128,15 +134,13 @@ stopifnot(length(extra_emiss) == 0)
 missing_vars <- setdiff(GCAM_EMISS, global_total$variable)
 stopifnot(length(missing_vars) == 0)
 
-
-
-
 output %>%
     check_req_names(req_cols = HEADERS$L2) %>%
     write.csv(file = file.path(DIRS$INTERMED, "L2.hector_gcam_inputs.csv"),
               row.names = FALSE)
 
-
+write_hector_csv(x = output, required = GCAM_EMISS,
+                 write_to = DIRS$TABLES, save_as = "gcam_emissions.csv")
 
 # Z. Quality Check -------------------------------------------------------------
 
