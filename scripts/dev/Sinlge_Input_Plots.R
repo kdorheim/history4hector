@@ -27,14 +27,15 @@ fname <- file.path(BASE_DIR, "data", "dev", "full_hector_runs.csv")
 full_hector_runs <- read.csv(fname)
 
 full_hector_runs %>%
-    filter(scenario == "old gcam set up") ->
-    old_gcam
+    filter(scenario == "default hector") ->
+    comp
 
 
 rslts %>%
     rename(new_value = value) %>%
-    left_join(old_gcam %>%
-                  select(year, variable, value), by = join_by(year, variable)) %>%
+    left_join(comp %>%
+                  select(year, variable, value), by = join_by(year, variable),
+              relationship = "many-to-many") %>%
     mutate(SE = (value - new_value)^2) %>%
     na.omit() %>%
     summarise(MSE = mean(SE), .by = c("scenario", "variable")) %>%
@@ -44,14 +45,12 @@ rslts %>%
 
 MSE_table %>%
     filter(variable == GLOBAL_TAS()) %>%
-    arrange(desc(MSE))
+    arrange(desc(MSE)) %>%
+    filter(abs(MSE) > 1e-8) ->
+    to_plot
 
 # 2. Make Plots -----------------------------------------------------------------
-
-
-scns <- unique(rslts$scenario)
-#scns <- scns[!grepl(pattern = "HFC|CFC|halo|HFC365_emissions|C2F6|CF4|SF6_", x = scns)]
-#scn <- "luc_emissions"
+scns <- unique(to_plot$scenario)
 
 lapply(scns, function(scn){
 
@@ -65,7 +64,7 @@ lapply(scns, function(scn){
         mutate(variable = factor(variable, levels = vars_to_plot, ordered = TRUE)) ->
         single_emiss_to_plot
 
-    old_gcam %>%
+    comp %>%
         filter(variable %in% vars_to_plot) %>%
         mutate(variable = factor(variable, levels = vars_to_plot, ordered = TRUE)) ->
         default_to_plot
@@ -79,8 +78,8 @@ lapply(scns, function(scn){
 
     tbs <- lapply(split(tb, tb$variable), "[", -1)
 
-    df <- tibble(x = rep(-Inf, length(tbs)),
-                 y = rep(Inf, length(tbs)),
+    df <- tibble(x = rep(Inf, length(tbs)),
+                 y = rep(-Inf, length(tbs)),
                  variable = factor(vars_to_plot, levels = vars_to_plot, ordered = TRUE),
                  tbl = tbs)
 
@@ -92,8 +91,8 @@ lapply(scns, function(scn){
         labs(y = NULL, x = NULL) +
         theme(legend.position = "bottom", legend.title = element_blank()) +
         labs(title = paste0("GCAM + new ", scn, " only")) +
-        geom_table(data = df, aes(x = x, y = y, label = tbl),
-                   hjust = 0, vjust = 1) ->
+         geom_table(data = df, aes(x = x, y = y, label = tbl),
+                   hjust = 1, vjust = 0) ->
         plot; plot
     fname <- file.path(PLOTS_DIR, paste0(scn, "_only.png"))
     ggsave(plot, filename = fname, width = 10, height = 5.5)
