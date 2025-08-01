@@ -75,10 +75,45 @@ noaa_ch4 %>%
     ch4_obs
 
 
+## 1C. CO2  --------------------------------------------------------------------
+
+
+# Load the CH4 NOAA observations
+fname <- file.path(DIRS$RAW_DATA, "co2_annmean_mlo.csv")
+stopifnot(file.exists(fname))
+
+read.csv(fname, comment.char = "#") %>%
+    select(year, value = mean) %>%
+    mutate(variable = CONCENTRATIONS_CO2(),
+           source = "NOAA") ->
+    noaa_co2
+
+
+# Load the CH4 observations from RCMIP.
+system.file(package  = "hector", "input/tables") %>%
+    file.path("ssp245_emiss-constraints_rf.csv") %>%
+    read.csv(comment.char = ";") %>%
+    filter(Date <= max(noaa_co2$year)) %>%
+    select(year = Date, value = CO2_CONSTRAIN()) %>%
+    mutate(variable = CONCENTRATIONS_CO2(),
+           source = "RCMIP") %>%
+    filter(year < min(noaa_co2$year)) ->
+    rmcip_obs
+
+
+# Combine the NOAA and RCMIP values.
+noaa_co2 %>%
+    rbind(rmcip_obs) %>%
+    select(year, value, variable) %>%
+    mutate(units = getunits(CO2_CONSTRAIN())) %>%
+    arrange(year) ->
+    co2_obs
 
 
 # Z. Save Results --------------------------------------------------------------
 
-
-
+# Save all the GHG observations
+rbind(n2o_obs, ch4_obs, co2_obs) %>%
+    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "ghg_data.csv"),
+              row.names = FALSE)
 

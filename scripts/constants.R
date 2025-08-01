@@ -34,6 +34,7 @@ BASE <-  here::here()
 DIRS <- list(
     DATA = file.path(BASE, "data"),
     RAW_DATA = file.path(BASE, "data", "raw-data"),
+    CALIBRATION_DATA = file.path(BASE, "data", "calibration"),
     MAPPING = file.path(BASE, "data", "mapping"),
     INTERMED = file.path(BASE, "data", "intermed"),
     INPUTS = file.path(BASE, "inputs"),

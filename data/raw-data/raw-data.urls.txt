@@ -4,3 +4,4 @@ https://zenodo.org/records/15218936/files/gfed-bb4cmip_cmip7_global_0011.csv
 https://gitlab.com/rcmip/rcmip/-/raw/master/data/protocol/rcmip-radiative-forcing-annual-means-v5-1-0.csv
 https://gml.noaa.gov/webdata/ccgg/trends/n2o/n2o_annmean_gl.csv
 https://gml.noaa.gov/webdata/ccgg/trends/ch4/ch4_annmean_gl.csv
+https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.csv
