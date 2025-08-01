@@ -114,6 +114,6 @@ noaa_co2 %>%
 
 # Save all the GHG observations
 rbind(n2o_obs, ch4_obs, co2_obs) %>%
-    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "ghg_data.csv"),
+    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ghg_data.csv"),
               row.names = FALSE)
 
