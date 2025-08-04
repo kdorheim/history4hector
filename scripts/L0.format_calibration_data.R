@@ -1,4 +1,5 @@
 # Prepare the data used in the calibration process.
+# K. Dorheim & P. Scully
 # 1. GHG observations
 # 2. Global Mean Temperature
 # 3. Ocean Heat Content
@@ -210,9 +211,41 @@ nasa_temp %>%
     mutate(source = "obs") ->
     temp_obs
 
+# 3. OHC -----------------------------------------------------------------------
+# Kuhlbrodt, T., Voldoire, A., Palmer, M. D., Geoffroy, O., & Killick, R. E. (2023).
+#   Historical Ocean Heat Uptake in Two Pairs of CMIP6 Models: Global and Regional
+#   Perspectives. Journal of Climate, 36(7), 2183–2203. https://doi.org/10.1175/JCLI-D-22-0468.1
+fname <- file.path(DIRS$RAW_DATA, "OHC_ensemble_Kuhlbrodt_etal_2022.csv")
+stopifnot(file.exists(fname))
 
+# Reading in only OHC data
+ohc_data <- read.table(fname,
+                       skip = 2,
+                       sep = ",",
+                       colClasses = c("numeric", "NULL", "NULL", "NULL",
+                                      "NULL", "NULL", "NULL", "numeric",
+                                      "numeric"))
 
+# Fixing table formatting
+ohc_data <- na.omit(ohc_data)
+colnames(ohc_data) <- c("year", "value", "unc")
 
+# Getting rid of non-integer years
+ohc_data$year <- ohc_data$year - 0.5
+
+# Adding in new columns to match Hector data frames
+ohc_data$source <- "obs"
+ohc_data$variable <- "OHC"
+ohc_data$units <- "ZJ"
+
+# Adding in confidence interval (if applicable)
+if (include_unc) {
+    ohc_data$lower <- ohc_data$value - ohc_data$unc
+    ohc_data$upper <- ohc_data$value + ohc_data$unc
+}
+
+# Getting rid of raw uncertainty column
+ohc_data$unc <- NULL
 
 
 # Z. Save Results --------------------------------------------------------------
@@ -226,5 +259,10 @@ rbind(n2o_obs, ch4_obs, co2_obs) %>%
 # Save the temperature observations
 write.csv(temp_obs, file = file.path(DIRS$CALIBRATION_DATA, "C.gmst_data.csv"),
           row.names = FALSE)
+
+# Save the ocean heat content data
+ohc_data %>%
+    mutate(units = "2005-2014 base period") %>%
+    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ohc_data.csv"))
 
 
