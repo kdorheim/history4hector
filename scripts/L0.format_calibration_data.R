@@ -162,13 +162,26 @@ stopifnot(file.exists(fname))
 
 # Load data
 read.csv(fname, skip = 1) %>%
-    select(year = Year, value = "J.D") %>%
+    rename(year = Year) ->
+    raw_data
+
+raw_data %>%
+    filter(year != 2019) %>%
+    select(all_of(month.abb)) %>%
+    apply(MARGIN = 1, sd, na.rm = TRUE) ->
+    sd_values
+
+raw_data %>%
+    select(year, value = "J.D") %>%
+    filter(year != 2019) %>%
     mutate(value = as.numeric(value)) %>%
     na.omit %>%
     mutate(variable = GMST(),
            source = "GISS",
            units = "1951–1980 base period") %>%
-    normalize_data_fxn(yrs = 1951:1980) ->
+    normalize_data_fxn(yrs = 1951:1980) %>%
+    mutate(unc = sd_values) %>%
+    mutate(lower = value - unc, upper = value + unc) ->
     nasa_temp
 
 
@@ -197,19 +210,15 @@ fname <- file.path(DIRS$RAW_DATA, "HadCRUT.5.0.2.0.analysis.summary_series.globa
 stopifnot(file.exists(fname))
 
 read.csv(fname, col.names = c("year", "value", "lower", "upper")) %>%
-    select(year, value) %>%
+    select(year, value, lower, upper) %>%
     mutate(variable = GMST(),
            source = "HadCRUT5") %>%
     normalize_data_fxn(yrs = 1951:1980) ->
     hadcrut_temp
 
 # Aggregate the values.
-nasa_temp %>%
-    bind_rows(hadcrut_temp,
-              noaa_temp) %>%
-    summarise(value = mean(value),  .by = c("year", "units", "variable")) %>%
-    mutate(source = "obs") ->
-    temp_obs
+temp_obs <- hadcrut_temp
+
 
 # 3. OHC -----------------------------------------------------------------------
 # Kuhlbrodt, T., Voldoire, A., Palmer, M. D., Geoffroy, O., & Killick, R. E. (2023).
@@ -239,13 +248,8 @@ ohc_data$variable <- "OHC"
 ohc_data$units <- "ZJ"
 
 # Adding in confidence interval (if applicable)
-if (include_unc) {
-    ohc_data$lower <- ohc_data$value - ohc_data$unc
-    ohc_data$upper <- ohc_data$value + ohc_data$unc
-}
-
-# Getting rid of raw uncertainty column
-ohc_data$unc <- NULL
+ohc_data$lower <- ohc_data$value - ohc_data$unc
+ohc_data$upper <- ohc_data$value + ohc_data$unc
 
 
 # Z. Save Results --------------------------------------------------------------
@@ -263,6 +267,6 @@ write.csv(temp_obs, file = file.path(DIRS$CALIBRATION_DATA, "C.gmst_data.csv"),
 # Save the ocean heat content data
 ohc_data %>%
     mutate(units = "2005-2014 base period") %>%
-    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ohc_data.csv"))
+    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ohc_data.csv"), row.names = FALSE)
 
 
