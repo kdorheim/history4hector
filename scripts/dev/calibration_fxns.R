@@ -89,7 +89,8 @@ list(file.path(DIRS$CALIBRATION_DATA, "C.ghg_data.csv"),
      file.path(DIRS$CALIBRATION_DATA, "C.gmst_data.csv"),
      file.path(DIRS$CALIBRATION_DATA, "C.ohc_data.csv")) %>%
     lapply(read.csv) %>%
-    bind_rows ->
+    bind_rows %>%
+    filter(year <= FINAL_HIST_YEAR) ->
     comparison_data
 
 
@@ -192,14 +193,13 @@ fetchvars_4comparison <- function(hc, comp){
 # Returns: an active hector core with the new parameter values
 my_setvar_fxn <- function(hc, pars){
 
+    print(pars)
+
+
     for(i in 1:length(pars)){
 
         var <- names(pars)[[i]]
         val <- pars[[i]]
-
-        print(var)
-        print(val)
-
 
         setvar(core = hc, dates = NA, var = var,
                values = val, unit = getunits(var))
@@ -289,44 +289,28 @@ obj_E4_unc <- function(hector_data, comp_data){
 
 
 
-
-# This is the fit_hector function that can be used
-comp_data <- comparison_data
-
-
-#pars <- c("S" = 5.25, "diff" = 2.52)
-
-
-#internal_fn <- function(fn = , obs, ){
-
-fn <-  obj_E4_unc
-# The free running
-ini <- system.file(package = "hector", "input/hector_ssp245.ini")
-hc1 <- newcore(ini, name = "free running")
-run(hc1)
-out1 <- fetchvars_4comparison(hc1, comparison_data)
-
-ini <- system.file(package = "hector", "input/hector_ssp245.ini")
-core  <- newcore_CO2_CH4_N2O(ini, name = "hector")
-
-
-inital_guess <- c("diff" = -1)
-
+# Helper function that returns the objective function to be used by optim
+# Args
+#   p: hector parameter values to be optimized
+#   err_fn: function such as obj_E4_unc that will be used to determine teh MSE
+#   obs: data.frame of the observational values
+#   core: active Hector core
 internal_fn <- function(p, err_fn, obs, core){
 
     stopifnot(isactive(core))
     stopifnot(is.character(getunits(names(p))))
+    max_yr <- FINAL_HIST_YEAR
 
     # Make sure that the initial guess runs without error
     # otherwise an error will be thrown.
     core <- my_setvar_fxn(hc = core, pars = p)
-    run(core)
+    run(core, runtodate = max_yr)
 
 
     fn <- function(par){
 
         core <- my_setvar_fxn(hc = core, pars = par)
-        run(core)
+        run(core, runtodate = max_yr)
         hector_data <- fetchvars_4comparison(hc = core, comp = obs)
 
         error <- err_fn(hector_data = hector_data, comp_data = obs)
@@ -337,16 +321,47 @@ internal_fn <- function(p, err_fn, obs, core){
     return(fn)
 }
 
+
+
+
+# Z. Testing calibration protocol --------------------------------------------
+#
+inital_guess <- c("diff" = 2.5)
+ini <- "inputs/hector-gcam.ini"
+core <- newcore_CO2_CH4_N2O(ini, name = "contrs")
+comparison_data %>%
+    filter(variable != CONCENTRATIONS_CO2()) ->
+    comp_data
+
 err_fn <- obj_E4_unc
 
-
-
 fxn <- internal_fn(p = inital_guess, err_fn = err_fn, obs = comp_data, core = core)
-fit <- optim(par = inital_guess, fn = fxn)
+fit1<- optim(par = inital_guess, fn = fxn, lower = c(0.1), upper = c(10), method = "L-BFGS-B")
 
 # Trying to decide what else should be included in this funciotn...
 
 
+fit1$convergence
+fit1$par
+
+fit1<- list()
+fit1$par <- c("S" = 3, "diff" = 1.21)
+# okay so now that the temperature parmeters have been resolved what
+# about the co2 parameters?
+
+inital_guess <- c("beta" = 0.36, "q10_rh" = 2.1)
+ini <- "inputs/hector-gcam.ini"
+core <- newcore_CH4_N2O(ini, name = "free co2")
+core <- my_setvar_fxn(core, pars = round(fit1$par, 2))
+
+comparison_data %>%
+    filter(variable == CONCENTRATIONS_CO2()) ->
+    comp_data
+
+err_fn <- obj_E4_unc
+fxn <- internal_fn(p = inital_guess, err_fn = err_fn, obs = comp_data, core = core)
+fit2 <- optim(par = inital_guess, fn = fxn)
+round(fit2$par, 2)
 
 # Z. Testings and Plots --------------------------------------------------------
 
