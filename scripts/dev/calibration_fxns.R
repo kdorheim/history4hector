@@ -164,7 +164,8 @@ fetchvars_4comparison <- function(hc, comp){
               vars = HEAT_FLUX()) %>%
         # Convert from heat flux to OHC that can be used
         mutate(value = value * OCEAN_AREA * W_TO_ZJ) %>%
-        mutate(value = cumsum(value)) %>%
+        mutate(value = cumsum(value),
+               variable = "OHC") %>%
         # Normalize to the correct reference period.
         normalize_data_fxn(yrs = 2005:2014) %>%
         mutate(units = "2005-2014 base period") ->
@@ -182,7 +183,37 @@ fetchvars_4comparison <- function(hc, comp){
 
 
 
-# 4. error & other functions ---------------------------------------------------
+# 4. setvar helpers ------------------------------------------------------------
+
+# Helper function that sets an active Hector core with user defined parameters
+# Args
+#   hc: active hector core
+#   pars: vector of the hector parameter values
+# Returns: an active hector core with the new parameter values
+my_setvar_fxn <- function(hc, pars){
+
+    for(i in 1:length(pars)){
+
+        var <- names(pars)[[i]]
+        val <- pars[[i]]
+
+        print(var)
+        print(val)
+
+
+        setvar(core = hc, dates = NA, var = var,
+               values = val, unit = getunits(var))
+        reset(hc)
+
+    }
+
+    return(hc)
+
+
+}
+
+
+# 5. error & other functions ---------------------------------------------------
 
 # NAE uncertainty function
 # Args
@@ -195,7 +226,7 @@ E4_unc_helper <- function(wide){
     stopifnot(all(req_cols %in% names(wide)))
 
     wide %>%
-    filter(variable %in% c(GMST(), HEAT_FLUX())) ->
+    filter(variable %in% c(GMST(), "OHC")) ->
         xx
 
     # Determine if the hector observation is out side of the uncertainty bounds...
@@ -221,42 +252,99 @@ E4_unc_helper <- function(wide){
 }
 
 
+# Normalized abs difference for each variable, analogous to
+# Experiment 4 (E4, unc) from P. Scully et al in prep
+# Args
+#   hector_data: data.frame of hector output ready for
+#       comparison (produced from fetchvars_4comparison)
+#   comp_data: data.frame of the observations
+# Returns: NAE for each of the variables considered
+obj_E4_unc <- function(hector_data, comp_data){
+
+    # Join Hector and observational data.
+    comp_data %>%
+        filter(variable %in% hector_data$variable) %>%
+        left_join(hector_data, by = join_by(year, variable, units)) ->
+        wide_hector_obs
+
+    # Throw an error if there is an issue with the join.
+    stopifnot(!any(is.na(wide_hector_obs$hector)))
+
+    # Calculate the MAE for CO2 which does not need to account for uncertainty.
+    wide_hector_obs %>%
+        filter(variable == CONCENTRATIONS_CO2()) %>%
+        mutate(NAE = abs(hector - value)/abs(value)) %>%
+        summarise(MNAE = mean(NAE), .by = variable) ->
+        co2_error
+
+    # Calculate the MAE for temp & heat flux which needs to account for the
+    # uncertainty range.
+    gmst_hf_error <- E4_unc_helper(wide_hector_obs)
+
+    out <- rbind(co2_error, gmst_hf_error)
+
+    return(out)
+
+}
 
 
-# From P. Scully et al
-# Experiment 4 (E4, unc) - the error metric we are going to consider is
-# Mean normalized abs difference
-
-obj_E4_unc <- function(hector_data, comp_data){}
 
 
+# This is the fit_hector function that can be used
 comp_data <- comparison_data
-hector_data <- out1
+
+
+#pars <- c("S" = 5.25, "diff" = 2.52)
+
+
+#internal_fn <- function(fn = , obs, ){
+
+fn <-  obj_E4_unc
+# The free running
+ini <- system.file(package = "hector", "input/hector_ssp245.ini")
+hc1 <- newcore(ini, name = "free running")
+run(hc1)
+out1 <- fetchvars_4comparison(hc1, comparison_data)
+
+ini <- system.file(package = "hector", "input/hector_ssp245.ini")
+core  <- newcore_CO2_CH4_N2O(ini, name = "hector")
+
+
+inital_guess <- c("diff" = -1)
+
+internal_fn <- function(p, err_fn, obs, core){
+
+    stopifnot(isactive(core))
+    stopifnot(is.character(getunits(names(p))))
+
+    # Make sure that the initial guess runs without error
+    # otherwise an error will be thrown.
+    core <- my_setvar_fxn(hc = core, pars = p)
+    run(core)
+
+
+    fn <- function(par){
+
+        core <- my_setvar_fxn(hc = core, pars = par)
+        run(core)
+        hector_data <- fetchvars_4comparison(hc = core, comp = obs)
+
+        error <- err_fn(hector_data = hector_data, comp_data = obs)
+        out <- mean(error$MNAE)
+        return(out)
+    }
+
+    return(fn)
+}
+
+err_fn <- obj_E4_unc
 
 
 
+fxn <- internal_fn(p = inital_guess, err_fn = err_fn, obs = comp_data, core = core)
+fit <- optim(par = inital_guess, fn = fxn)
 
-# Join Hector and observational data.
-comp_data %>%
-    filter(variable %in% hector_data$variable) %>%
-    left_join(hector_data, by = join_by(year, variable, units)) ->
-    wide_hector_obs
-
-# Calculate the MAE for CO2 which does not need to account for uncertainty.
-wide_hector_obs %>%
-    filter(variable == CONCENTRATIONS_CO2()) %>%
-    mutate(NAE = abs(hector - value)/abs(value)) %>%
-    summarise(MNAE = mean(NAE), .by = variable) ->
-    co2_error
-
-
-# Calculate the MAE for temp & heat flux which needs to account for the
-# uncertainty range.
-gmst_hf_error <- E4_unc_helper(wide_hector_obs)
-
-
-
-
+# Trying to decide what else should be included in this funciotn...
 
 
 
