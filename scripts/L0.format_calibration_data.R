@@ -151,56 +151,6 @@ normalize_data_fxn <- function(data, yrs){
 }
 
 
-# NASA GISS global temperature
-# GISTEMP Team, 2019: GISS Surface Temperature Analysis (GISTEMP), version 3.
-#   NASA Goddard Institute for Space Studies. Dataset accessed 20YY-MM-DD
-#   at https://data.giss.nasa.gov/gistemp/.
-# Hansen, J., R. Ruedy, M. Sato, and K. Lo, 2010: Global surface temperature
-#   change, Rev. Geophys., 48, RG4004, doi:10.1029/2010RG000345.
-fname <- file.path(DIRS$RAW_DATA, "GLB.Ts+dSST.csv")
-stopifnot(file.exists(fname))
-
-# Load data
-read.csv(fname, skip = 1) %>%
-    rename(year = Year) ->
-    raw_data
-
-raw_data %>%
-    filter(year != 2019) %>%
-    select(all_of(month.abb)) %>%
-    apply(MARGIN = 1, sd, na.rm = TRUE) ->
-    sd_values
-
-raw_data %>%
-    select(year, value = "J.D") %>%
-    filter(year != 2019) %>%
-    mutate(value = as.numeric(value)) %>%
-    na.omit %>%
-    mutate(variable = GMST(),
-           source = "GISS",
-           units = "1951–1980 base period") %>%
-    normalize_data_fxn(yrs = 1951:1980) %>%
-    mutate(unc = sd_values) %>%
-    mutate(lower = value - unc, upper = value + unc) ->
-    nasa_temp
-
-
-# NOAA global temperature
-# Huang, B., X. Yin, M. J. Menne, R. Vose, and H. Zhang, NOAA Global Surface
-#   Temperature Dataset (NOAAGlobalTemp), Version 6.0.0 [indicate subset used].
-#   NOAA National Centers for Environmental Information. https://doi.org/10.25921/rzxg-p717
-fname <- file.path(DIRS$RAW_DATA, "aravg.ann.land_ocean.90S.90N.v6.0.0.202506.asc")
-stopifnot(file.exists(fname))
-
-read.table(fname, col.names = c("year", "value", "total error",
-                                "high-frequency", "low-frequency",
-                                "bias error")) %>%
-    select(year, value) %>%
-    mutate(variable = GMST(),
-           source = "NOAA") %>%
-    normalize_data_fxn(yrs = 1951:1980) ->
-    noaa_temp
-
 # HadCRUT5 Data Set
 # Morice, C. P., Kennedy, J. J., Rayner, N. A., Winn, J. P., Hogan, E.,
 #   Killick, R. E., et al. (2021). An updated assessment of near‐surface
@@ -210,10 +160,29 @@ fname <- file.path(DIRS$RAW_DATA, "HadCRUT.5.0.2.0.analysis.summary_series.globa
 stopifnot(file.exists(fname))
 
 read.csv(fname, col.names = c("year", "value", "lower", "upper")) %>%
-    select(year, value, lower, upper) %>%
+    select(year, value, lower, upper) ->
+    hadcrut_raw_data
+
+# Normalize the lower and upper bounds
+hadcrut_raw_data %>%
+    select(year, value = lower) %>%
+    normalize_data_fxn(yrs = 1951:1980) %>%
+    pull(value) ->
+    lower_values
+
+hadcrut_raw_data %>%
+    select(year, value = upper) %>%
+    normalize_data_fxn(yrs = 1951:1980) %>%
+    pull(value) ->
+    upper_values
+
+hadcrut_raw_data %>%
+    select(year, value) %>%
     mutate(variable = GMST(),
            source = "HadCRUT5") %>%
-    normalize_data_fxn(yrs = 1951:1980) ->
+    normalize_data_fxn(yrs = 1951:1980) %>%
+    cbind(lower = lower_values,
+          upper = upper_values) ->
     hadcrut_temp
 
 # Aggregate the values.
