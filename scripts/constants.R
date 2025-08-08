@@ -329,4 +329,5 @@ NON_GCAM_EMISS <- c("CCl4_emissions",
                     "halon1211_emissions",
                     "halon2402_emissions",
                     "halon1301_emissions",
-                    "N2O_natural_emissions")
+                    "N2O_natural_emissions",
+                    "CH4N")

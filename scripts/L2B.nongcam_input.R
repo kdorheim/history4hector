@@ -106,7 +106,9 @@ L1_data %>%
 
 # --- Natural N2O emissions ----------------------------------------------------
 # Calculate the natural N2O emissions from the N2O concentration observations
-# and the anthropogenic N2O emissions.
+# and the anthropogenic N2O emissions. Since N2O concentrations are independent
+# of temperature and carbon cycle feedback unlike [CH4]. The natural CH4
+# emissions must be calculated after the free Hector parameters are tuned.
 n2o_conc  <- filter(conc_data, variable == CONCENTRATIONS_N2O())
 n2o_emiss <- filter(other_global_emiss, variable == EMISSIONS_N2O())
 

@@ -1,24 +1,29 @@
 # Run all of the scripts!
-
-
+# 0. Set Up --------------------------------------------------------------------
+# Prep raw data
 L0_files <- c("L0.CEDS.R",
               "L0.BB4CMIP.R",
               "L0.climate_indicators.R",
               "L0.GCP.R",
               "L0.RCMIP.R")
 
+# Convert to Hector units
 L1_files <- c("L1.CEDS_hector.R",
               "L1.BB4CMIP_hector.R",
               "L1.GCP_hector.R")
 
+# Create the input csv tables
 L2_files <- c("L2A.gcam_input_csv.R",
               "L2B.nongcam_input.R")
 
-L3_files <- c("L3.write_ini.R")
+# Finalize gcam-hector inputs, calibrate hector & natural CH4 emissions.
+L3_files <- c("L3A.write_draft_ini.R",
+              "L3B.calibration.R")
 
 files <- c(L0_files, L1_files, L2_files, L3_files)
 
+# 1. Run -----------------------------------------------------------------------
+
 for(f in files){
-    print(f)
-    source(here::here("scripts", f))
+    source(here::here("scripts", f)); print(f)
 }

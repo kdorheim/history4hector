@@ -226,7 +226,7 @@ E4_unc_helper <- function(wide){
     stopifnot(all(req_cols %in% names(wide)))
 
     wide %>%
-    filter(variable %in% c(GMST(), "OHC")) ->
+        filter(variable %in% c(GMST(), "OHC")) ->
         xx
 
     # Determine if the hector observation is out side of the uncertainty bounds...
@@ -243,7 +243,7 @@ E4_unc_helper <- function(wide){
     NAE[upper_cond] <- upper_error[upper_cond]
 
     xx %>%
-        mutate(NAE = NAE) %>%
+        mutate(NAE = NAE / abs(value)) %>%
         summarise(value = mean(NAE), .by = variable) ->
         out
 
@@ -289,6 +289,35 @@ obj_E4_unc <- function(hector_data, comp_data){
 
 
 
+# MSE
+#   hector_data: data.frame of hector output ready for
+#       comparison (produced from fetchvars_4comparison)
+#   comp_data: data.frame of the observations
+# Returns: MSE for each of the variables considered
+obj_MSE <- function(hector_data, comp_data){
+
+    # Join Hector and observational data.
+    comp_data %>%
+        filter(variable %in% hector_data$variable) %>%
+        left_join(hector_data, by = join_by(year, variable, units)) ->
+        wide_hector_obs
+
+    # Throw an error if there is an issue with the join.
+    stopifnot(!any(is.na(wide_hector_obs$hector)))
+
+    # Calculate the MSE of each of the variables.
+    wide_hector_obs %>%
+        mutate(SE = (hector - value)^2) %>%
+        summarise(value = mean(SE), .by = "variable") ->
+        out
+
+    return(out)
+
+}
+
+
+
+
 # Helper function that returns the objective function to be used by optim
 # Args
 #   p: hector parameter values to be optimized
@@ -320,81 +349,5 @@ internal_fn <- function(p, err_fn, obs, core){
 
     return(fn)
 }
-
-
-
-
-# Z. Testing calibration protocol --------------------------------------------
-#
-inital_guess <- c("diff" = 2.5)
-ini <- "inputs/hector-gcam.ini"
-core <- newcore_CO2_CH4_N2O(ini, name = "contrs")
-comparison_data %>%
-    filter(variable != CONCENTRATIONS_CO2()) ->
-    comp_data
-
-err_fn <- obj_E4_unc
-
-fxn <- internal_fn(p = inital_guess, err_fn = err_fn, obs = comp_data, core = core)
-fit1<- optim(par = inital_guess, fn = fxn, lower = c(0.1), upper = c(10), method = "L-BFGS-B")
-
-# Trying to decide what else should be included in this funciotn...
-
-
-fit1$convergence
-fit1$par
-
-fit1<- list()
-fit1$par <- c("S" = 3, "diff" = 1.21)
-# okay so now that the temperature parmeters have been resolved what
-# about the co2 parameters?
-
-inital_guess <- c("beta" = 0.36, "q10_rh" = 2.1)
-ini <- "inputs/hector-gcam.ini"
-core <- newcore_CH4_N2O(ini, name = "free co2")
-core <- my_setvar_fxn(core, pars = round(fit1$par, 2))
-
-comparison_data %>%
-    filter(variable == CONCENTRATIONS_CO2()) ->
-    comp_data
-
-err_fn <- obj_E4_unc
-fxn <- internal_fn(p = inital_guess, err_fn = err_fn, obs = comp_data, core = core)
-fit2 <- optim(par = inital_guess, fn = fxn)
-round(fit2$par, 2)
-
-# Z. Testings and Plots --------------------------------------------------------
-
-YRS <- 1850:2020
-VARS <- c(CONCENTRATIONS_CO2(), CONCENTRATIONS_N2O(), CONCENTRATIONS_CH4(),
-          EMISSIONS_CH4(), EMISSIONS_N2O(), RF_TOTAL())
-
-# The free running
-ini <- system.file(package = "hector", "input/hector_ssp245.ini")
-hc1 <- newcore(ini, name = "free running")
-run(hc1)
-out1 <- fetchvars_4comparison(hc1, comparison_data)
-
-
-hc2 <- newcore_CH4_N2O(ini, "CH4 & N2O constrainted")
-run(hc2)
-out2 <- fetchvars(hc2, YRS, VARS)
-
-hc3 <- newcore_CO2_CH4_N2O(ini, "CH4, N2O, & CO2 constrainted")
-run(hc3)
-out3 <- fetchvars(hc3, YRS, VARS)
-
-
-to_plot <- rbind(out1, out2, out3)
-
-to_plot %>%
-    filter(variable == RF_TOTAL()) %>%
-    ggplot() +
-    geom_line(aes(year, value, color = scenario, linetype = scenario))
-
-
-
-
-
 
 
