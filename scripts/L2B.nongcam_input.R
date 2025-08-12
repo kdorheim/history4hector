@@ -138,10 +138,18 @@ global_total %>%
 
 # --- Natural CH4 Emissions ----------------------------------------------------
 
-# TODO this is a place holder for now because Hector does not have the capability
-# to do time varying Natural CH4 emissions...
+# Place holder for the natural CH4 emissions, they will be added post
+# calibration but for now there needs to be some sort of value such
+# that the hector_gcam.ini can run.
+natural_ch4 <- data.frame(variable = NATURAL_CH4(),
+                          year = unique(global_total$year),
+                          value = 300,
+                          units = getunits(NATURAL_CH4()))
 
-
+# Add to global_total
+natural_ch4 %>%
+    rbind(global_total) ->
+    global_total
 
 
 # --- Base Period RF -----------------------------------------------------------
@@ -181,7 +189,7 @@ output %>%
 # have all the data for all the years.
 
 write_hector_csv(x = output, required = NON_GCAM_EMISS,
-                 write_to = DIRS$TABLES, save_as = "default_emissions.csv")
+                 write_to = DIRS$INPUTS, save_as = "default_emissions.csv")
 
 
 # Z. Quality Check -------------------------------------------------------------

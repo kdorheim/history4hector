@@ -38,13 +38,6 @@ DIRS$MAPPING %>%
 L1_data %>%
     left_join(mapping,
               by = join_by("variable", "sector", "source")) %>%
-    #filter(variable == "NOx")
-
-
-
-
-
-
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
     mutate(units = getunits(variable)) %>%
@@ -140,7 +133,7 @@ output %>%
               row.names = FALSE)
 
 write_hector_csv(x = output, required = GCAM_EMISS,
-                 write_to = DIRS$TABLES, save_as = "gcam_emissions.csv")
+                 write_to = DIRS$INPUTS, save_as = "gcam_emissions.csv")
 
 # Z. Quality Check -------------------------------------------------------------
 

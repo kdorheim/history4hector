@@ -10,20 +10,24 @@ L0_files <- c("L0.CEDS.R",
 # Convert to Hector units
 L1_files <- c("L1.CEDS_hector.R",
               "L1.BB4CMIP_hector.R",
-              "L1.GCP_hector.R")
+              "L1.GCP_hector.R",
+              "L1.hector_v32.R",
+              "L1.RCMIP_hector.R")
 
 # Create the input csv tables
 L2_files <- c("L2A.gcam_input_csv.R",
               "L2B.nongcam_input.R")
 
 # Finalize gcam-hector inputs, calibrate hector & natural CH4 emissions.
-L3_files <- c("L3A.write_draft_ini.R",
-              "L3B.calibration.R")
+CALIBRATION <- FALSE # Skip over calibration during development.
+L3_files    <- c("L3A.write_draft_ini.R",
+                 "L3B.calibration.R")
 
 files <- c(L0_files, L1_files, L2_files, L3_files)
 
 # 1. Run -----------------------------------------------------------------------
 
 for(f in files){
+    print(f)
     source(here::here("scripts", f)); print(f)
 }

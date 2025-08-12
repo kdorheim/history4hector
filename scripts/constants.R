@@ -2,7 +2,7 @@
 
 # Start from a clean environment
 # TODO this would be dropped if written as a function like gcamdata
-remove(list = ls())
+#remove(list = ls())
 
 
 # 0. Load packages -------------------------------------------------------------
@@ -37,8 +37,7 @@ DIRS <- list(
     CALIBRATION_DATA = file.path(BASE, "data", "calibration"),
     MAPPING = file.path(BASE, "data", "mapping"),
     INTERMED = file.path(BASE, "data", "intermed"),
-    INPUTS = file.path(BASE, "inputs"),
-    TABLES = file.path(BASE, "inputs", "tables")
+    INPUTS = file.path(BASE, "inputs")
 )
 
 sapply(DIRS,

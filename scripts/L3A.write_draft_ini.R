@@ -18,10 +18,10 @@ get_default_ini <- function(){
 
 # Ensure that the two csv tables exsit
 nongcam_input_file <- "default_emissions.csv"
-stopifnot(file.exists(file.path(DIRS$TABLES, nongcam_input_file)))
+stopifnot(file.exists(file.path(DIRS$INPUTS, nongcam_input_file)))
 
 gcam_input_file <- "gcam_emissions.csv"
-stopifnot(file.exists(file.path(DIRS$TABLES, gcam_input_file)))
+stopifnot(file.exists(file.path(DIRS$INPUTS, gcam_input_file)))
 
 
 # Load the ini files

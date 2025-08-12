@@ -207,7 +207,7 @@ rbind(natural_ch4_emissions, future_NCH4) %>%
 
 # Load the place holder default emissions file and prep for use in the write_hector_csv
 # function, aka transform from wide to long.
-read.csv(file.path(DIRS$TABLES, "default_emissions.csv"), comment.char = ";") %>%
+read.csv(file.path(DIRS$INPUTS, "default_emissions.csv"), comment.char = ";") %>%
     pivot_longer(-Date, names_to = "variable") %>%
     rename(year = Date) %>%
     mutate(units = getunits(variable)) %>%
@@ -219,5 +219,5 @@ read.csv(file.path(DIRS$TABLES, "default_emissions.csv"), comment.char = ";") %>
 
 # Save output
 write_hector_csv(x = emissions_data, required = NON_GCAM_EMISS,
-                 write_to = DIRS$TABLES, save_as = "default_emissions.csv")
+                 write_to = DIRS$INPUTS, save_as = "default_emissions.csv")
 
