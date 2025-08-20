@@ -12,6 +12,7 @@ library(dplyr)
 library(here)
 library(tidyr)
 library(zoo)
+#remotes::install_github("jgcri/hector@dev")
 library(hector)
 library(readxl)
 
@@ -23,6 +24,7 @@ if (FALSE) {
     stopifnot(packageVersion("tidyr") == "1.3.1")
     stopifnot(packageVersion("here") == "1.0.1")
     stopifnot(packageVersion("zoo") == "1.8.12")
+    stopifnot(packageVersion("hector") == "3.4.9")
 }
 
 # packages that are probably not going to be required but could be helpful during

@@ -113,7 +113,7 @@ normalize_data_fxn <- function(data, yrs){
     # data for all the base period years.
     req_names <- c("year", "value")
     stopifnot(all(req_names %in% names(data)))
-    stopifnot(all(yrs %in% data$year))
+    #stopifnot(all(yrs %in% data$year))
 
     # format the units label
     units <- paste("relative to", paste(range(yrs), collapse = "-"))

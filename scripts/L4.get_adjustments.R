@@ -24,6 +24,5 @@ fetchvars(hc, ref_period, c(GMST(),  GLOBAL_TAS())) %>%
 write.csv(ref_values, file = file.path(DIRS$INPUTS, "gcam-hector_temp_ref.csv"),
           row.names = FALSE)
 
-
 print("all done!")
 
