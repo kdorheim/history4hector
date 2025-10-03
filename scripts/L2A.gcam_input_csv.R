@@ -5,7 +5,7 @@
 #   (1) long format of the csv file that might be useful for debugging
 #   (2) properly formatted input table
 # TODO
-#   How do we want to deal with the future period that is needed for the non GCAM emissions??
+
 # 0. Set Up --------------------------------------------------------------------
 
 # Load the project constants and basic functions
@@ -105,9 +105,10 @@ global_total %>%
 stopifnot(all(vals > 1e-8))
 
 n <- length(1745:FINAL_HIST_YEAR)
-data.frame(year = rep(1745:FINAL_HIST_YEAR, each = 2),
-           value = 0,
-           variable = rep(c(DACCS_UPTAKE(), LUC_UPTAKE()), n/2)) %>%
+
+data.frame(year = c(1745:FINAL_HIST_YEAR, 1745:FINAL_HIST_YEAR),
+           variable = rep(c(DACCS_UPTAKE(), LUC_UPTAKE()), each = n),
+           value = 0) %>%
     mutate(units = getunits(variable)) %>%
     arrange(variable, year) ->
     c_uptake

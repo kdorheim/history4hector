@@ -9,6 +9,9 @@
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
+# This is the final year hector is using historical emissions.
+FINAL_YEAR <- 2015
+
 
 # 1. GHG -----------------------------------------------------------------------
 # Citation for all of the GHGs
@@ -226,16 +229,20 @@ ohc_data$upper <- ohc_data$value + ohc_data$unc
 # Save all the GHG observations
 rbind(n2o_obs, ch4_obs, co2_obs) %>%
     mutate(source = "obs") %>%
+    filter(year <= FINAL_YEAR) %>%
     write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ghg_data.csv"),
               row.names = FALSE)
 
 # Save the temperature observations
-write.csv(temp_obs, file = file.path(DIRS$CALIBRATION_DATA, "C.gmst_data.csv"),
-          row.names = FALSE)
+temp_obs %>%
+    filter(year <= FINAL_YEAR) %>%
+    write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.gmst_data.csv"),
+              row.names = FALSE)
 
 # Save the ocean heat content data
 ohc_data %>%
     mutate(units = "2005-2014 base period") %>%
+    filter(year <= FINAL_YEAR) %>%
     write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ohc_data.csv"), row.names = FALSE)
 
 

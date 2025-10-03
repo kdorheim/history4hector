@@ -5,10 +5,14 @@
 #   (1) long format of the csv file that might be useful for debugging
 #   (2) properly formatted input table
 # TODO
-#   How do we want to deal with the future period that is needed for the non GCAM emissions??
+#   How do we want to deal with the future period that is needed for the non
+#   GCAM emissions?? Is there a better assumption we could make other than SSP2-45?
 # 0. Set Up --------------------------------------------------------------------
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
+
+# Generates some helpful quality assessment plots if set to true.
+CHECK <- FALSE
 
 # --- Import Data --------------------------------------------------------------
 # Load data
@@ -51,39 +55,58 @@ DIRS$MAPPING %>%
 #   n2o_conc: data frame of observations of global N2O concentrations
 #   total_emiss: data frame of Hector's N2O_emissions
 # Returns: data frame of the N2O natural emissions for Hector
-get_natural_N2O <- function(n2o_conc, total_emiss){
+get_natural_N2O <- function(n2o_conc, n2o_emiss){
 
     # Confirm that we are only working with the correct variables.
-    stopifnot(unique(total_emiss$variable) == EMISSIONS_N2O())
+    stopifnot(unique(n2o_emiss$variable) == EMISSIONS_N2O())
     stopifnot(unique(n2o_conc$variable) == CONCENTRATIONS_N2O())
-
 
     # As defined in table S2 of Dorheim et al. 2024
     tau_0 <- 132
     N2O_conc_0 <- 273.87
 
-    # Save information about the number of entries
-    n <- nrow(n2o_conc)
+    # Save the values for 1745 as the starting point.
+    my_n2o_conc <- c(N2O_conc_0)
+    my_tau      <- c(tau_0)
 
-    # Determine the change in N2O concentrations
-    # per time step.
-    delta_n2o <- diff(n2o_conc$value)
+    total_E <- (N2O_conc_0/tau_0) * 4.8
+    new_nat_n2o <- total_E - n2o_emiss$value[1]
 
-    # Calculate N2O lifetime
-    tau_n2o <- tau_0 * (n2o_conc$value[1:n-1]/N2O_conc_0)^(-0.05)
+    my_nat_n2o  <- c(new_nat_n2o)
 
-    # Calculate the total emissions based on equation (S1)
-    my_emiss <- 4.8 * (delta_n2o + n2o_conc$value[1:n-1]/tau_n2o)
+    for(t in n2o_emiss$year[-1]){
 
-    # Calculate the difference between total emissions associated with
-    # n2o concentrations and the anthropocentric emissions.
-    natural_emiss <- my_emiss-total_emiss$value[2:n]
+        # Extract the information that we need in our calculation
+        # for the present time step.
+        antro_emiss <- n2o_emiss$value[n2o_emiss$year == t]
+        lag_n2o <- my_n2o_conc[t-1745]
+        current_n2o <- n2o_conc$value[n2o_conc$year == t]
 
-    data.frame(year = total_emiss$year[1:n-1],
-               value = natural_emiss,
-               variable = NAT_EMISSIONS_N2O()) %>%
-        na.omit() %>%
-        mutate(units = getunits(NAT_EMISSIONS_N2O())) ->
+        # Calculate the elements of the N2O concentration equation
+        delta_n2o <- current_n2o - lag_n2o
+        tau <- tau_0 * (lag_n2o/N2O_conc_0)^(-0.05)
+        total_emiss <- 4.8 * (delta_n2o + lag_n2o/tau)
+        new_nat_emiss <- total_emiss - antro_emiss
+
+        # Make sure that the natural emissions strictly positive
+        # if not then assume 0 natural emissions and update the
+        # concentrations accordingly.
+        if(new_nat_emiss < 0){
+            update_delta_n2o <- antro_emiss/4.8 - lag_n2o/tau
+            my_n2o_conc <- c(my_n2o_conc, lag_n2o + update_delta_n2o)
+            my_nat_n2o <- c(my_nat_n2o, 0)
+        } else {
+            my_nat_n2o <- c(my_nat_n2o, new_nat_emiss)
+            my_n2o_conc <- c(my_n2o_conc, lag_n2o + delta_n2o)
+        }
+
+    }
+
+
+    data.frame(year = n2o_emiss$year,
+               value = my_nat_n2o,
+               variable = NAT_EMISSIONS_N2O(),
+               units = getunits(NAT_EMISSIONS_N2O())) ->
         out
 
     return(out)
@@ -96,7 +119,7 @@ get_natural_N2O <- function(n2o_conc, total_emiss){
 # variables that are missing that need to be handled individually.
 L1_data %>%
     right_join(mapping,
-              by = join_by("variable", "sector", "source"), relationship = "many-to-many") %>%
+               by = join_by("variable", "sector", "source"), relationship = "many-to-many") %>%
     summarise(value = sum(value), .by = c("hector_variable", "year")) %>%
     select(variable = hector_variable, year, value) %>%
     mutate(units = getunits(variable)) %>%
@@ -110,10 +133,10 @@ L1_data %>%
 # of temperature and carbon cycle feedback unlike [CH4]. The natural CH4
 # emissions must be calculated after the free Hector parameters are tuned.
 n2o_conc  <- filter(conc_data, variable == CONCENTRATIONS_N2O())
-n2o_emiss <- filter(other_global_emiss, variable == EMISSIONS_N2O())
+n2o_antro_emiss <- filter(other_global_emiss, variable == EMISSIONS_N2O())
 
 # Calculate natural N2O emissions
-natural_n2o <- get_natural_N2O(n2o_conc, n2o_emiss)
+natural_n2o <- get_natural_N2O(n2o_conc, n2o_antro_emiss)
 
 # Hold the future natural N2O emissions constant for the rest
 # of the future period. This is the approach taken by other RCMs
@@ -132,6 +155,30 @@ natural_n2o %>%
                    units = getunits(NAT_EMISSIONS_N2O()))) ->
     final_natural_n2o
 
+
+if(CHECK){
+
+    ini <- system.file(package = "hector", "input/hector_ssp245.ini")
+    hc <- newcore(ini)
+    setvar(hc, dates = n2o_emiss$year, var = EMISSIONS_N2O(), values = n2o_emiss$value, unit = getunits(EMISSIONS_N2O()))
+    reset(hc)
+    setvar(hc, dates = final_natural_n2o$year, var = NAT_EMISSIONS_N2O(), values = final_natural_n2o$value, unit = getunits(NAT_EMISSIONS_N2O()))
+    reset(hc)
+    run(hc)
+    out <- fetchvars(hc, n2o_conc$year, vars = CONCENTRATIONS_N2O())
+
+    out$value - n2o_conc$value
+
+    ggplot() +
+        geom_line(data = out, aes(year, value, color = "hector")) +
+        geom_line(data = n2o_conc, aes(year, value, color = "obs"))
+
+
+    out$value - n2o_conc$value
+}
+
+
+
 global_total %>%
     rbind(final_natural_n2o) ->
     global_total
@@ -141,13 +188,10 @@ global_total %>%
 # Place holder for the natural CH4 emissions, they will be added post
 # calibration but for now there needs to be some sort of value such
 # that the hector_gcam.ini can run.
-natural_ch4 <- data.frame(variable = NATURAL_CH4(),
-                          year = unique(global_total$year),
-                          value = 300,
-                          units = getunits(NATURAL_CH4()))
-
-# Add to global_total
-natural_ch4 %>%
+data.frame(variable = NATURAL_CH4(),
+           year = unique(global_total$year),
+           value = 300,
+           units = getunits(NATURAL_CH4())) %>%
     rbind(global_total) ->
     global_total
 
@@ -160,11 +204,7 @@ base_yrs <- 1745:1750
 
 global_total %>%
     mutate(value = if_else(year %in% base_yrs & units == "W/m2", 0, value)) %>%
-    na.omit ->
-    global_total
-
-
-global_total %>%
+    na.omit %>%
     filter(year <= FINAL_FUT_YEAR) ->
     output
 
@@ -194,7 +234,7 @@ write_hector_csv(x = output, required = NON_GCAM_EMISS,
 
 # Z. Quality Check -------------------------------------------------------------
 
-if(FALSE){
+if(CHECK){
 
     source("scripts/dev/hector_comp_data.R")
 

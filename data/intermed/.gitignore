@@ -6,5 +6,5 @@
 *.html
 *.DS_Store
 *.csv
-*ini
+*.ini
 old/

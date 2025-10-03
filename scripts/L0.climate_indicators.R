@@ -22,19 +22,23 @@ file.path(DIRS$RAW_DATA, "ClimateIndicator-data-9612b1d",
           "ghg_concentrations.csv") %>%
     read.csv() %>%
     rename(year = timebound_lower) %>%
-   # filter(year >= 1850) %>%
     pivot_longer(-year, names_to = "variable") %>%
     filter(variable %in% vars_to_save) %>%
     arrange(variable, year) ->
     raw_ghg_missing
 
-# Fill in missing data using linear interpolation.
-add_missing_data(raw_ghg_missing,
-                 expected_years = min(raw_ghg_missing$year):FINAL_HIST_YEAR,
-                 fill = 1) %>%
-    # TODO this function does not work when the data is
-    # starts at 1850
-    extend_to_1745 %>%
+# TODO set these in the ini file
+# Use the preindustiral values set in Hector's ini file as the
+# 1745 values.
+M0=731.41
+N0=273.87
+preindust_ghg_vals <- data.frame(year = c(1745, 1745),
+                                    variable = c("CH4", "N2O"),
+                                    value = c(M0, N0))
+# Use linear interpolation to fill in the missing years.
+preindust_ghg_vals %>%
+    rbind(raw_ghg_missing) %>%
+    add_missing_data(expected_years = 1745:FINAL_HIST_YEAR, fill = 1) %>%
     mutate(variable = paste0(variable, "_concentration")) ->
     obs_ghg
 

@@ -12,8 +12,7 @@ source(here::here("scripts", "constants.R"))
 
 # Read in the ssp245 scenario data
 system.file("input/tables/ssp245_emiss-constraints_rf.csv", package = "hector") %>%
-    read.csv(comment.char = ";") %>%
-    select(-HFC365_emissions) ->
+    read.csv(comment.char = ";") ->
     wide_results
 
 # Save only a copy of the emissions and the dates

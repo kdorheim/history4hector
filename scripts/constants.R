@@ -1,8 +1,10 @@
 # Read in R packages and define project constants
 
-# Start from a clean environment
-# TODO this would be dropped if written as a function like gcamdata
-#remove(list = ls())
+# TODO
+# Starting from a clean environment can sometimes be helpful with testing
+# this call could be avoided though if history4hector became more of a
+# package than a pile of scripts.
+# remove(list = ls())
 
 
 # 0. Load packages -------------------------------------------------------------
@@ -12,7 +14,7 @@ library(dplyr)
 library(here)
 library(tidyr)
 library(zoo)
-#remotes::install_github("jgcri/hector@dev")
+remotes::install_github("jgcri/hector@dev")
 library(hector)
 library(readxl)
 
@@ -215,7 +217,10 @@ add_missing_data <- function(df, expected_years, fill = NA) {
 
 
     ids <- setdiff(names(df), c("year", "value"))
-    meta_data <- distinct(df[, ids])
+    df %>%
+        select(all_of(ids)) %>%
+        distinct ->
+        meta_data
     n <- nrow(meta_data)
 
     replicate(length(missing_yrs), meta_data, simplify = FALSE) %>%
@@ -264,6 +269,56 @@ add_missing_data <- function(df, expected_years, fill = NA) {
     }
 
 }
+
+
+# Extend data to fill in the missing years...
+# Args
+#   df: data frame that ends early
+#   final_year: final year of the df needs to be extended to
+#   window: int. the size of the average to use for the missing year extension
+# Returns: data frame with results until the final year
+constant_extend_to_final_yr <- function(df, final_year = FINAL_HIST_YEAR, window = 10){
+
+    # Make sure all the required years are there...
+    invisible(check_req_names(df, req_cols = c("year", "value", "variable")))
+
+    # Figure out final year of data and missing years
+    data_final_yr <- max(df$year)
+    missing_yrs   <- (data_final_yr+1):final_year
+    n_missing_yrs <- length(missing_yrs)
+
+    # Check to see if there is a need to extend the data or not.
+    if(data_final_yr >= final_year){
+        warning("data extension not needed")
+        return(df)
+    }
+
+    meta_data <- setdiff(names(df), c("value", "year"))
+
+    df %>%
+        filter(year %in% (data_final_yr-window):(data_final_yr)) %>%
+        summarise(value = mean(value), .by = all_of(meta_data)) ->
+        decadal_avg
+
+    # Replicate the entries for the number of missing years and
+    # format the data.
+    new_df <- decadal_avg[rep(seq_len(nrow(decadal_avg)), each = n_missing_yrs), ]
+    years <- rep(missing_yrs, times = nrow(new_df))
+    new_df$year <- years
+
+
+    df %>%
+        bind_rows(new_df) %>%
+        arrange(variable, year) ->
+        out
+
+    return(out)
+}
+
+
+
+
+
 # 3. Constants -----------------------------------------------------------------
 
 # The required names for csv written out at different points.
@@ -279,7 +334,7 @@ FIRST_YEAR <- 1745
 
 # Final year of emissions that marks the transition from historical
 # to future period
-FINAL_HIST_YEAR <- 2022
+FINAL_HIST_YEAR <- 2023
 
 # Final future year.
 FINAL_FUT_YEAR <- 2300

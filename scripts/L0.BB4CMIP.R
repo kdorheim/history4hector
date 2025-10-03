@@ -64,15 +64,9 @@ emissions %>%
     mutate(variable =  gsub(replacement = "", x = variable,
                              pattern = "\\|")) %>%
     mutate(sector =  gsub(replacement = " ", x = sector,
-                            pattern = "\\|")) ->
+                            pattern = "\\|")) %>%
+    constant_extend_to_final_yr ->
     output
-
-
-
-output %>%
-    filter(variable == "Nx") %>% head()
-
-
 
 
 # 2. Save Output ---------------------------------------------------------------

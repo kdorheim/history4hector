@@ -18,7 +18,8 @@ run(hc, runtodate = FINAL_HIST_YEAR)
 ref_period <- 1850:1900
 
 fetchvars(hc, ref_period, c(GMST(),  GLOBAL_TAS())) %>%
-    summarise(value = mean(value), .by = c("variable")) ->
+    summarise(value = mean(value), .by = c("variable")) %>%
+    mutate(value = round(value, 4)) ->
     ref_values
 
 write.csv(ref_values, file = file.path(DIRS$INPUTS, "gcam-hector_temp_ref.csv"),
