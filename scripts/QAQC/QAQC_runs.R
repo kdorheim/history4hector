@@ -23,7 +23,7 @@ read.csv(here::here("inputs", "gcam_emissions.csv"), comment.char = ";") %>%
     rename(year = Date) ->
     d1
 
-read.csv(here::here("inputs", "default_emissions.csv"), comment.char = ";") %>%
+read.csv(here::here("inputs", "default_inputs.csv"), comment.char = ";") %>%
     pivot_longer(-Date, names_to = "variable") %>%
     rename(year = Date) ->
     d2

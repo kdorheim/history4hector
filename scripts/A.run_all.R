@@ -3,7 +3,6 @@
 # Prep raw data
 L0_files <- c("L0.CEDS.R",
               "L0.BB4CMIP.R",
-              "L0.climate_indicators.R",
               "L0.GCP.R",
               "L0.RCMIP.R",
               "L0.format_calibration_data.R")

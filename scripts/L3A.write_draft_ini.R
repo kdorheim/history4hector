@@ -17,7 +17,7 @@ get_default_ini <- function(){
 # 1. Main Chunk ----------------------------------------------------------------
 
 # Ensure that the two csv tables exsit
-nongcam_input_file <- "default_emissions.csv"
+nongcam_input_file <- "default_inputs.csv"
 stopifnot(file.exists(file.path(DIRS$INPUTS, nongcam_input_file)))
 
 gcam_input_file <- "gcam_emissions.csv"

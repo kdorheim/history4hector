@@ -27,7 +27,7 @@ L1_files %>%
     L1_data
 
 # There are some specific data that is required
-file.path(DIRS$INTERMED, "L0.climate_indicators.csv") %>%
+file.path(DIRS$CALIBRATION_DATA, "C.ghg_data.csv") %>%
     read.csv ->
     conc_data
 
@@ -60,6 +60,12 @@ get_natural_N2O <- function(n2o_conc, n2o_emiss){
     # Confirm that we are only working with the correct variables.
     stopifnot(unique(n2o_emiss$variable) == EMISSIONS_N2O())
     stopifnot(unique(n2o_conc$variable) == CONCENTRATIONS_N2O())
+
+
+    # Make sure there are no more emissions relative to the concentrations
+    n2o_emiss %>%
+        filter(year <= max(n2o_conc$year)) ->
+        n2o_emiss
 
     # As defined in table S2 of Dorheim et al. 2024
     tau_0 <- 132
@@ -136,13 +142,15 @@ n2o_conc  <- filter(conc_data, variable == CONCENTRATIONS_N2O())
 n2o_antro_emiss <- filter(other_global_emiss, variable == EMISSIONS_N2O())
 
 # Calculate natural N2O emissions
-natural_n2o <- get_natural_N2O(n2o_conc, n2o_antro_emiss)
+natural_n2o <- get_natural_N2O(n2o_conc = n2o_conc, n2o_emiss = n2o_antro_emiss)
 
 # Hold the future natural N2O emissions constant for the rest
 # of the future period. This is the approach taken by other RCMs
 # see FAIR v1.3 documentation (Smith et al. 2018).
+# It will be the final 10 years of the time vayring natural n2o emissions.
+final_yr <- max(natural_n2o$year)
 natural_n2o %>%
-    filter(year %in% 2009:2014) %>%
+    filter(year %in% (final_yr-10):final_yr) %>%
     pull(value) %>%
     mean ->
     future_value
@@ -160,7 +168,7 @@ if(CHECK){
 
     ini <- system.file(package = "hector", "input/hector_ssp245.ini")
     hc <- newcore(ini)
-    setvar(hc, dates = n2o_emiss$year, var = EMISSIONS_N2O(), values = n2o_emiss$value, unit = getunits(EMISSIONS_N2O()))
+    setvar(hc, dates = n2o_antro_emiss$year, var = EMISSIONS_N2O(), values = n2o_antro_emiss$value, unit = getunits(EMISSIONS_N2O()))
     reset(hc)
     setvar(hc, dates = final_natural_n2o$year, var = NAT_EMISSIONS_N2O(), values = final_natural_n2o$value, unit = getunits(NAT_EMISSIONS_N2O()))
     reset(hc)
@@ -172,7 +180,6 @@ if(CHECK){
     ggplot() +
         geom_line(data = out, aes(year, value, color = "hector")) +
         geom_line(data = n2o_conc, aes(year, value, color = "obs"))
-
 
     out$value - n2o_conc$value
 }
@@ -229,7 +236,7 @@ output %>%
 # have all the data for all the years.
 
 write_hector_csv(x = output, required = NON_GCAM_EMISS,
-                 write_to = DIRS$INPUTS, save_as = "default_emissions.csv")
+                 write_to = DIRS$INPUTS, save_as = "default_inputs.csv")
 
 
 # Z. Quality Check -------------------------------------------------------------

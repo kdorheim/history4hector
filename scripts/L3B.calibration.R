@@ -38,29 +38,58 @@ update_ini <- function(ini_lines, params){
 
 # 1. Diff, Beta, Q10, MSE  -----------------------------------------------------
 if (CALIBRATION){
-    # This is pretty bad I think that it is not favoring the CO2 concentrations
-    # enough ah!
 
-    # All three variables free at once.
-    inital_guess <- c("diff" = 2.5, "beta" = 0.36, "q10_rh" = 2.1)
+
+    # In the first calibration only vary the diff parameter
+    ini <- "inputs/hector-gcam.ini"
+    core <- newcore_CO2_CH4_N2O(ini, name = "constrainted")
+
+    # Since we are only calibrating an EBM related parameter,
+    # only use temp & ohc.
+    comparison_data %>%
+        filter(variable %in% c(GLOBAL_TAS(), "OHC")) ->
+        comp_data
+
+
+    fxn  <- internal_fn(p = c("diff" = 1),
+                        err_fn = obj_E4_unc,
+                        obs = comp_data,
+                        core = core)
+
+    fit1 <- optim(par = c("diff" = 2), fn = fxn,
+                  lower = c(0.5),
+                  upper = c(3),
+                  method = "L-BFGS-B")
+
+
 
     # Set up the hector core
     ini <- "inputs/hector-gcam.ini"
     core <- newcore_CH4_N2O(ini, name = "contrs")
+    name <-  names(fit1$par)
+    setvar(core, NA, name, values = fit1$par, unit = getunits(name))
+    reset(core)
 
 
-    # Select the comparison data.
+    # Now calibrate the carbon cycle parameters
     comparison_data %>%
-        filter(variable %in% c(CONCENTRATIONS_CO2(), GMST(), "OHC")) ->
+        filter(variable == CONCENTRATIONS_CO2()) ->
         comp_data
 
-    fxn  <- internal_fn(p = inital_guess, err_fn = obj_MSE,
-                        obs = comp_data, core = core)
-    fit1 <- optim(par = inital_guess, fn = fxn, lower = c(0.1, 0.001, 0.001),
-                  upper = c(10, 2, 6), method = "L-BFGS-B")
+    fxn  <- internal_fn(p = c("beta" = 0.1, "q10_rh" = 2),
+                        err_fn = obj_MSE,
+                        obs = comp_data,
+                        core = core)
+
+    fit2 <- optim(par = c("beta" = .53, "q10_rh" = 1.99), fn = fxn,
+                  lower = c(0, 1.5),
+                  upper = c(1.9, 3),
+                  method = "L-BFGS-B")
+
+
 
     # Run Hector
-    params_to_use <- round(fit1$par, digits = 3)
+    params_to_use <- round(c(fit1$par, fit2$par), digits = 3)
     write.csv(data.frame(t(params_to_use)), file = file.path(DIRS$INTERMED, "hector_params.csv"), row.names = FALSE)
 
 } else {

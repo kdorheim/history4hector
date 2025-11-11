@@ -1,6 +1,6 @@
 # Prepare the data used in the calibration process.
 # K. Dorheim & P. Scully
-# 1. GHG observations
+# 1. [GHG] from CMIP7
 # 2. Global Mean Temperature
 # 3. Ocean Heat Content
 
@@ -9,114 +9,27 @@
 # Load the project constants and basic functions
 source(here::here("scripts", "constants.R"))
 
-# This is the final year hector is using historical emissions.
-FINAL_YEAR <- 2015
-
 
 # 1. GHG -----------------------------------------------------------------------
-# Citation for all of the GHGs
-# Lan, X., K.W. Thoning, and E.J. Dlugokencky: Trends in globally-averaged CH4,
-#   N2O, and SF6 determined from NOAA Global Monitoring Laboratory measurements.
-#   Version 2025-07, https://doi.org/10.15138/P8XG-AA10
-## 1A. N2O  --------------------------------------------------------------------
+## CMIP7 historical [GHG]
+## Nicholls, Z., Meinshausen, M., Pflüger, M., & Lewis, J. (2025).
+## CMIP GHG Forcing. Zenodo. https://doi.org/10.5281/ZENODO.14892947
 
-# Load the N2O NOAA observations
-fname <- file.path(DIRS$RAW_DATA, "n2o_annmean_gl.csv")
-stopifnot(file.exists(fname))
-
-read.csv(fname, comment.char = "#") %>%
-    select(year, value = mean) %>%
-    mutate(variable = CONCENTRATIONS_N2O(),
-           source = "NOAA") ->
-    noaa_n2o
-
-# Load the N2O observations from RCMIP.
-system.file(package  = "hector", "input/tables") %>%
-    file.path("ssp245_emiss-constraints_rf.csv") %>%
-    read.csv(comment.char = ";") %>%
-    filter(Date <= max(noaa_n2o$year)) %>%
-    select(year = Date, value = N2O_CONSTRAIN()) %>%
-    mutate(variable = CONCENTRATIONS_N2O(),
-           source = "RCMIP") %>%
-    filter(year < min(noaa_n2o$year)) ->
-    rmcip_obs
-
-# Combine the NOAA and RCMIP values.
-noaa_n2o %>%
-    rbind(rmcip_obs) %>%
-    select(year, value, variable) %>%
-    mutate(units = getunits(N2O_CONSTRAIN())) %>%
-    arrange(year) ->
-    n2o_obs
-
-## 1B. CH4  --------------------------------------------------------------------
-
-# Load the CH4 NOAA observations
-fname <- file.path(DIRS$RAW_DATA, "ch4_annmean_gl.csv")
-stopifnot(file.exists(fname))
-
-read.csv(fname, comment.char = "#") %>%
-    select(year, value = mean) %>%
-    mutate(variable = CONCENTRATIONS_CH4(),
-           source = "NOAA") ->
-    noaa_ch4
-
-
-# Load the CH4 observations from RCMIP.
-system.file(package  = "hector", "input/tables") %>%
-    file.path("ssp245_emiss-constraints_rf.csv") %>%
-    read.csv(comment.char = ";") %>%
-    filter(Date <= max(noaa_ch4$year)) %>%
-    select(year = Date, value = CH4_CONSTRAIN()) %>%
-    mutate(variable = CONCENTRATIONS_CH4(),
-           source = "RCMIP") %>%
-    filter(year < min(noaa_ch4$year)) ->
-    rmcip_obs
-
-
-# Combine the NOAA and RCMIP values.
-noaa_ch4 %>%
-    rbind(rmcip_obs) %>%
-    select(year, value, variable) %>%
-    mutate(units = getunits(CH4_CONSTRAIN())) %>%
-    arrange(year) ->
-    ch4_obs
-
-
-## 1C. CO2  --------------------------------------------------------------------
-
-
-# Load the CH4 NOAA observations
-fname <- file.path(DIRS$RAW_DATA, "co2_annmean_mlo.csv")
-stopifnot(file.exists(fname))
-
-read.csv(fname, comment.char = "#") %>%
-    select(year, value = mean) %>%
-    mutate(variable = CONCENTRATIONS_CO2(),
-           source = "NOAA") ->
-    noaa_co2
-
-
-# Load the CH4 observations from RCMIP.
-system.file(package  = "hector", "input/tables") %>%
-    file.path("ssp245_emiss-constraints_rf.csv") %>%
-    read.csv(comment.char = ";") %>%
-    filter(Date <= max(noaa_co2$year)) %>%
-    select(year = Date, value = CO2_CONSTRAIN()) %>%
-    mutate(variable = CONCENTRATIONS_CO2(),
-           source = "RCMIP") %>%
-    filter(year < min(noaa_co2$year)) ->
-    rmcip_obs
-
-
-# Combine the NOAA and RCMIP values.
-noaa_co2 %>%
-    rbind(rmcip_obs) %>%
-    select(year, value, variable) %>%
-    mutate(units = getunits(CO2_CONSTRAIN())) %>%
-    arrange(year) ->
-    co2_obs
-
+list.files(DIRS$RAW_DATA, pattern = "hist_cmip7_conc.csv", full.names = TRUE) %>%
+    lapply(read.csv) %>%
+    bind_rows() %>%
+    # use consistent variable names as with Hector
+    mutate(variable = if_else(variable == "n2o", CONCENTRATIONS_N2O(), variable)) %>%
+    mutate(variable = if_else(variable == "co2", CONCENTRATIONS_CO2(), variable)) %>%
+    mutate(variable = if_else(variable == "ch4", CONCENTRATIONS_CH4(), variable)) %>%
+    # add units information
+    mutate(units = if_else(variable == CONCENTRATIONS_N2O(), getunits(N2O_CONSTRAIN()), NA)) %>%
+    mutate(units = if_else(variable == CONCENTRATIONS_CH4(), getunits(CH4_CONSTRAIN()), units)) %>%
+    mutate(units = if_else(variable == CONCENTRATIONS_CO2(), getunits(CO2_CONSTRAIN()), units)) %>%
+    mutate(source = "cmip7") %>%
+    # extend the inputs to 1745
+    extend_to_1745 ->
+    cmip7_ghg
 
 # 2. Global Temp. --------------------------------------------------------------
 
@@ -227,22 +140,19 @@ ohc_data$upper <- ohc_data$value + ohc_data$unc
 # Z. Save Results --------------------------------------------------------------
 
 # Save all the GHG observations
-rbind(n2o_obs, ch4_obs, co2_obs) %>%
-    mutate(source = "obs") %>%
-    filter(year <= FINAL_YEAR) %>%
+cmip7_ghg %>%
     write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ghg_data.csv"),
               row.names = FALSE)
 
+
 # Save the temperature observations
 temp_obs %>%
-    filter(year <= FINAL_YEAR) %>%
     write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.gmst_data.csv"),
               row.names = FALSE)
 
 # Save the ocean heat content data
 ohc_data %>%
     mutate(units = "2005-2014 base period") %>%
-    filter(year <= FINAL_YEAR) %>%
     write.csv(file = file.path(DIRS$CALIBRATION_DATA, "C.ohc_data.csv"), row.names = FALSE)
 
 
