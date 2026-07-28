@@ -202,6 +202,17 @@ data.frame(variable = NATURAL_CH4(),
     rbind(global_total) ->
     global_total
 
+# RF misc ----------------------------------------------------------------------
+# Hector's RF misc enables additional forcings that might be perscribed as part
+# of a protocol be read as inputs (solar radiation, black carbon on snow ect.)
+# however in GCAM we assume this to be 0.
+data.frame(variable = RF_MISC(),
+           year = unique(global_total$year),
+           value = 0,
+           units = getunits(RF_MISC())) %>%
+    rbind(global_total) ->
+    global_total
+
 
 # --- Base Period RF -----------------------------------------------------------
 
@@ -219,10 +230,10 @@ global_total %>%
 # 2. Save Output ---------------------------------------------------------------
 # First check to make sure that all of the required variables are present
 # and that there are no additional extra ones that have snuck in.
-extra_emiss <- setdiff(global_total$variable, NON_GCAM_EMISS)
+extra_emiss <- setdiff(global_total$variable, NON_GCAM_INPUTS)
 stopifnot(length(extra_emiss) == 0)
 
-missing_vars <- setdiff(NON_GCAM_EMISS, global_total$variable)
+missing_vars <- setdiff(NON_GCAM_INPUTS, global_total$variable)
 stopifnot(length(missing_vars) == 0)
 
 
@@ -235,7 +246,7 @@ output %>%
 # Save the input table. This will also ensure that all the variables
 # have all the data for all the years.
 
-write_hector_csv(x = output, required = NON_GCAM_EMISS,
+write_hector_csv(x = output, required = NON_GCAM_INPUTS,
                  write_to = DIRS$INPUTS, save_as = "default_inputs.csv")
 
 

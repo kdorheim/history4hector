@@ -28,7 +28,7 @@ stopifnot(file.exists(file.path(DIRS$INPUTS, gcam_input_file)))
 ini <- get_default_ini()
 
 # TODO consider writing a function?
-nongcam_indx <- which(grepl(x = ini, pattern = paste0(NON_GCAM_EMISS, collapse = "|")))
+nongcam_indx <- which(grepl(x = ini, pattern = paste0(NON_GCAM_INPUTS, collapse = "|")))
 new_lines <- gsub(x = ini[nongcam_indx], pattern = "TABLE_NAME", replacement = nongcam_input_file)
 ini[nongcam_indx] <- new_lines
 

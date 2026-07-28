@@ -367,7 +367,7 @@ GCAM_EMISS <- c("ffi_emissions",
 
 # The emissions/inputs not modeled by GCAM that will need to be defined for
 # both the historical and future periods.
-NON_GCAM_EMISS <- c("CCl4_emissions",
+NON_GCAM_INPUTS <- c("CCl4_emissions",
                     "CFC113_emissions",
                     "CFC114_emissions",
                     "CFC115_emissions",
@@ -386,4 +386,5 @@ NON_GCAM_EMISS <- c("CCl4_emissions",
                     "halon2402_emissions",
                     "halon1301_emissions",
                     "N2O_natural_emissions",
-                    "CH4N")
+                    "CH4N",
+                    "RF_misc")

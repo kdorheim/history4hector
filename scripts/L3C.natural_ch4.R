@@ -219,6 +219,6 @@ read.csv(file.path(DIRS$INPUTS, "default_inputs.csv"), comment.char = ";") %>%
     emissions_data
 
 # Save output
-write_hector_csv(x = emissions_data, required = NON_GCAM_EMISS,
+write_hector_csv(x = emissions_data, required = NON_GCAM_INPUTS,
                  write_to = DIRS$INPUTS, save_as = "default_inputs.csv")
 
