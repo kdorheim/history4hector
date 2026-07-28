@@ -61,15 +61,19 @@ ceds_wide_data %>%
     output
 
 # 2. Save Output ---------------------------------------------------------------
-
 output %>%
     check_req_names(req_cols = HEADERS$L0) %>%
     write.csv(file = file.path(DIRS$INTERMED, "L0.CEDS_raw.csv"),
               row.names = FALSE)
 
 
-output %>%
-    filter(variable == "CH4_Extension") %>%
-    summarise(value = sum(value), .by = "year") %>%
-    ggplot(aes(year, value)) +
-    geom_line()
+if (FALSE){
+
+    output %>%
+        filter(variable == "CH4_Extension") %>%
+        summarise(value = sum(value), .by = "year") %>%
+        ggplot(aes(year, value)) +
+        geom_line()
+
+}
+

@@ -14,10 +14,10 @@ library(dplyr)
 library(here)
 library(tidyr)
 library(zoo)
-remotes::install_github("jgcri/hector@v3.5.0")
+remotes::install_github("jgcri/hector@dev")
 library(hector)
 library(readxl)
-
+library(readr)
 
 # During development let's not set these versions in stone
 if (FALSE) {

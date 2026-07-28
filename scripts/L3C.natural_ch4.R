@@ -12,8 +12,9 @@ source("scripts/fxns_calibration.R")
 #   ini: path to the hector ini
 #   name: "no name" by default but will name the hector results if a
 #           different string is provided
+#   ghg_constraints: data frame of the ghg constraints aka observations...
 # Returns: active hector core ready to run in constraint mode
-newcore_CH4_N2O <- function(ini, name = "no name"){
+newcore_CH4_N2O <- function(ini, name = "no name", ghg_constraints){
 
     stopifnot(file.exists(ini))
 
