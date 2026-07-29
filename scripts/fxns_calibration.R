@@ -138,39 +138,82 @@ normalize_data_fxn <- function(data, yrs){
 # Fetch the relevant Hector results for the data comparison,
 # make sure that they are in the correct units.
 # Args
-#   hc: active hector core that has completed a run
+#   hc: active hector core that has completed a run or set to NULL
 #   comp: data.frame of the observations to use in the comparison
+#   hector_out: data.frame of hector results or set to NULL, default set to NULL
 # Returns: data.frame of Hector results in the correct units for comparison
-fetchvars_4comparison <- function(hc, comp){
+fetchvars_4comparison <- function(hc, comp, hector_out = NULL){
 
-    # Make sure that the hector core has been run!
-    stopifnot(!hc[["strtdate"]] == hc[["enddate"]])
+    null_length <- sum(c(is.null(hc), is.null(hector_out)))
+    stopifnot(null_length == 1)
 
-    yrs <- min(comp$year):max(comp$year)
+    # If the object read in is a hector core use fetchvars to get the
+    # equalivent to compare with observations otherwise extract from
+    # a hector output data frame.
+    if(class(hc)[[1]] == "hcore"){
 
-    fetchvars(core = hc,
-              dates = yrs,
-              vars = CONCENTRATIONS_CO2()) ->
-        hector_co2
+        # Make sure that the hector core has been run!
+        stopifnot(!hc[["strtdate"]] == hc[["enddate"]])
 
-    fetchvars(core = hc,
-              dates = yrs,
-              vars = GMST()) %>%
-        normalize_data_fxn(yrs = 1951:1980) %>%
-        mutate(units = "relative to 1951-1980") ->
-        hector_gmst
+        yrs <- min(comp$year):max(comp$year)
 
-    fetchvars(core = hc,
-              dates = yrs,
-              vars = HEAT_FLUX()) %>%
-        # Convert from heat flux to OHC that can be used
-        mutate(value = value * OCEAN_AREA * W_TO_ZJ) %>%
-        mutate(value = cumsum(value),
-               variable = "OHC") %>%
-        # Normalize to the correct reference period.
-        normalize_data_fxn(yrs = 2005:2014) %>%
-        mutate(units = "2005-2014 base period") ->
-        hector_ohc
+        fetchvars(core = hc,
+                  dates = yrs,
+                  vars = CONCENTRATIONS_CO2()) ->
+            hector_co2
+
+        fetchvars(core = hc,
+                  dates = yrs,
+                  vars = GMST()) %>%
+            normalize_data_fxn(yrs = 1951:1980) %>%
+            mutate(units = "relative to 1951-1980") ->
+            hector_gmst
+
+        fetchvars(core = hc,
+                  dates = yrs,
+                  vars = HEAT_FLUX()) %>%
+            # Convert from heat flux to OHC that can be used
+            mutate(value = value * OCEAN_AREA * W_TO_ZJ) %>%
+            mutate(value = cumsum(value),
+                   variable = "OHC") %>%
+            # Normalize to the correct reference period.
+            normalize_data_fxn(yrs = 2005:2014) %>%
+            mutate(units = "2005-2014 base period") ->
+            hector_ohc
+
+
+    } else if(is.data.frame(hector_out)){
+
+
+        yrs <- min(comp$year):max(comp$year)
+
+
+        hector_out %>%
+            filter(year %in% yrs, variable == CONCENTRATIONS_CO2()) ->
+            hector_co2
+
+        hector_out %>%
+            filter(year %in% yrs, variable == GMST()) %>%
+            normalize_data_fxn(yrs = 1951:1980) %>%
+            mutate(units = "relative to 1951-1980") ->
+            hector_gmst
+
+
+
+        hector_out %>%
+            filter(year %in% yrs, variable == HEAT_FLUX()) %>%
+            # Convert from heat flux to OHC that can be used
+            mutate(value = value * OCEAN_AREA * W_TO_ZJ) %>%
+            mutate(value = cumsum(value),
+                   variable = "OHC") %>%
+            # Normalize to the correct reference period.
+            normalize_data_fxn(yrs = 2005:2014) %>%
+            mutate(units = "2005-2014 base period") ->
+            hector_ohc
+
+
+    }
+
 
 
     bind_rows(hector_co2,
@@ -181,6 +224,12 @@ fetchvars_4comparison <- function(hc, comp){
 
     return(out)
 }
+
+
+
+
+
+
 
 
 
