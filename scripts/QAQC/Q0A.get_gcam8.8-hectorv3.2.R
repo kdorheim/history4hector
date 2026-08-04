@@ -18,6 +18,7 @@ here::here("data/raw-data/gcam8.8-hectorv3.2/gcam-hector-outputstreamReference.c
     read.csv(comment.char = "#") %>%
     filter(spinup == 0) %>%
     mutate(scenario = "gcamV8.8-hectorV3.2") %>%
+    mutate(variable = if_else(variable == "FCH4", "RF_CH4", variable)) %>%
     select(scenario, year, variable, value, units) ->
     hector_output
 

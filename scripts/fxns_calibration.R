@@ -147,6 +147,8 @@ fetchvars_4comparison <- function(hc, comp, hector_out = NULL){
     null_length <- sum(c(is.null(hc), is.null(hector_out)))
     stopifnot(null_length == 1)
 
+    hector_ch4 <- hector_n2o <- NULL
+
     # If the object read in is a hector core use fetchvars to get the
     # equalivent to compare with observations otherwise extract from
     # a hector output data frame.
@@ -182,6 +184,27 @@ fetchvars_4comparison <- function(hc, comp, hector_out = NULL){
             hector_ohc
 
 
+        if (CONCENTRATIONS_CH4() %in% comp$variable) {
+            fetchvars(core = hc,
+                      dates = yrs,
+                      vars = CONCENTRATIONS_CH4()) ->
+                hector_ch4
+
+        }
+
+
+        if (CONCENTRATIONS_N2O() %in% comp$variable) {
+            fetchvars(core = hc,
+                      dates = yrs,
+                      vars = CONCENTRATIONS_N2O()) ->
+                hector_n2o
+
+        }
+
+
+
+
+
     } else if(is.data.frame(hector_out)){
 
 
@@ -211,6 +234,22 @@ fetchvars_4comparison <- function(hc, comp, hector_out = NULL){
             mutate(units = "2005-2014 base period") ->
             hector_ohc
 
+        if (CONCENTRATIONS_CH4() %in% comp$variable) {
+            hector_out %>%
+                filter(year %in% yrs, variable == CONCENTRATIONS_CH4()) ->
+                hector_ch4
+
+        }
+
+
+        if (CONCENTRATIONS_N2O() %in% comp$variable) {
+            hector_out %>%
+                filter(year %in% yrs, variable == CONCENTRATIONS_N2O()) ->
+                hector_n2o
+
+        }
+
+
 
     }
 
@@ -218,7 +257,9 @@ fetchvars_4comparison <- function(hc, comp, hector_out = NULL){
 
     bind_rows(hector_co2,
               hector_gmst,
-              hector_ohc) %>%
+              hector_ohc,
+              hector_n2o,
+              hector_ch4) %>%
         select(scenario, year, variable, hector = value, units) ->
         out
 
