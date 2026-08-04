@@ -221,4 +221,7 @@ ggplot() +
     geom_point(data = hector_data_CO2AGWP100, aes(variable, value, color = source)) +
     scale_color_manual(values = COLOR_SCHEME) +
     theme(legend.position = "bottom", legend.title = element_blank()) +
-    labs(x = NULL, y = "AWGP CO2 100", caption = "older hector results not avaiable")
+    labs(x = NULL, y = "AWGP CO2 100", caption = "older hector results not avaiable") ->
+    plot
+
+ggsave(filename = file.path(FIGS_DIR, "AWGP", "AWGPCO2100.png"), width = WIDTH, height = HEIGHT)
