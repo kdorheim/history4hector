@@ -1,9 +1,9 @@
 # Description: Read in the Global carbon project data and format so that is is in
 # raw units but a form that is consistent and easy to work with.
+#
+# Global Carbon Budget 2025 (Friedlingstein et al., 2025, ESSD)
+# https://globalcarbonbudget.org/datahub/the-latest-gcb-data-2025/
 
-
-# Global Carbon Budget 2024 (Friedlingstein et al., 2024b, ESSD)
-# Description file:///Users/dorh012/Downloads/Global+Carbon+Budget+v2024+Dataset+Descriptions.pdf
 # 0. Set Up --------------------------------------------------------------------
 
 # Load the project constants and basic functions
@@ -13,10 +13,10 @@ source(here::here("scripts", "constants.R"))
 # 1. Main Chunk CO2 Emissions --------------------------------------------------
 
 # Check inputs
-gcb_file <- list.files(DIRS$RAW_DATA, pattern = "Global_Carbon_Budget_2024_v1.0",
-                       full.names = TRUE)
-assert_that(file.exists(gcb_file),
-            msg =  "missing data need run get-raw-data.sh")
+gcb_file <- list.files(DIRS$RAW_DATA, pattern = "Global_Carbon_Budget_",
+                       full.names = TRUE, recursive = TRUE)
+assert_that(length(file.exists(gcb_file)) > 1,
+            msg = "missing data need run A2.get-raw-data.sh")
 
 
 
@@ -43,8 +43,12 @@ output %>%
     write.csv(file = file.path(DIRS$INTERMED, "L0.GCP_raw.csv"),
               row.names = FALSE)
 
+# Z. QAQC ----------------------------------------------------------------------
 
-
-
-
-
+# Let's take a bit of a look of what is going on with the different sinks....
+if(FALSE){
+    output %>%
+        filter(variable %in% c("land sink", "ocean sink", "budget imbalance")) %>%
+        ggplot(aes(year, value, color = variable)) +
+        geom_line()
+}

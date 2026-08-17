@@ -50,8 +50,11 @@ newcore_CH4_N2O <- function(ini, name = "no name"){
 #   ini: path to the hector ini
 #   name: "no name" by default but will name the hector results if a
 #           different string is provided
+#   CH4: default set to FALSE, if set to TRUE then the historical CH4 constraints will be used
+#   CO2: default set to FALSE, if set to TRUE then the historical CO2 constraints will be used
+#   N2O: default set to FALSE, if set to TRUE then the historical N2O constraints will be used
 # Returns: active hector core ready to run in constraint mode
-newcore_CO2_CH4_N2O <- function(ini, name = "no name"){
+newcore_w_constraints <- function(ini, name = "no name", CH4 = FALSE, CO2 = FALSE, N2O = FALSE){
 
     stopifnot(file.exists(ini))
 
@@ -64,21 +67,25 @@ newcore_CO2_CH4_N2O <- function(ini, name = "no name"){
     co2 <- filter(ghg_constraints, variable == CONCENTRATIONS_CO2())
 
 
-    # Apply the constraints to the Hector core
-    setvar(core = hc, dates = ch4$year, var = CH4_CONSTRAIN(),
-           values = ch4$value, unit = getunits(CH4_CONSTRAIN()))
-    reset(hc)
+    if(CH4){
+        # Apply the constraints to the Hector core
+        setvar(core = hc, dates = ch4$year, var = CH4_CONSTRAIN(),
+               values = ch4$value, unit = getunits(CH4_CONSTRAIN()))
+        reset(hc)
+    }
+    if(N2O){
+        setvar(core = hc, dates = n2o$year, var = N2O_CONSTRAIN(),
+               values = n2o$value, unit = getunits(N2O_CONSTRAIN()))
+        reset(hc)
+    }
 
-    setvar(core = hc, dates = n2o$year, var = N2O_CONSTRAIN(),
-           values = n2o$value, unit = getunits(N2O_CONSTRAIN()))
-    reset(hc)
-
-    setvar(core = hc, dates = co2$year, var = CO2_CONSTRAIN(),
-           values = co2$value, unit = getunits(CO2_CONSTRAIN()))
-    reset(hc)
+    if(CO2){
+        setvar(core = hc, dates = co2$year, var = CO2_CONSTRAIN(),
+               values = co2$value, unit = getunits(CO2_CONSTRAIN()))
+        reset(hc)
+    }
 
     return(hc)
-
 }
 
 

@@ -125,7 +125,7 @@ here::here("data/intermed/hector_params.csv") %>%
 
 hc <- my_setvar_fxn(newcore(ini), pars = params)
 
-data.frame(value = co2_awgp_X(hc),
+data.frame(value = co2_awgp_100(hc),
            variable = "CO2 AGWP 100",
            source = "hectorV3.5.X") ->
     out
@@ -133,3 +133,11 @@ data.frame(value = co2_awgp_X(hc),
 write.csv(x = out, file = file.path(WRITE_TO, "gcamhectorDEV_CO2AGWP100.csv"), row.names = FALSE)
 
 
+
+
+ini <- here::here("inputs/hector-gcam.ini")
+hc  <- newcore(ini, name = "dev")
+run(hc, runtodate = 2023)
+fetchvars(hc, 1746:2023, vars = c(NBP())) %>%
+    ggplot(aes(year, value)) +
+    geom_line()

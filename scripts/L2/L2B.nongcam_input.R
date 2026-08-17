@@ -69,7 +69,14 @@ get_natural_N2O <- function(n2o_conc, n2o_emiss){
 
     # As defined in table S2 of Dorheim et al. 2024
     tau_0 <- 132
-    N2O_conc_0 <- 273.87
+
+    # Use the historical concentrations we are calibrating to, this should
+    # also be consistent with the vlaue in the ini file.
+    conc_data %>%
+        filter(variable == CONCENTRATIONS_N2O()) %>%
+        filter(year == 1745) %>%
+        pull(value) ->
+        N2O_conc_0
 
     # Save the values for 1745 as the starting point.
     my_n2o_conc <- c(N2O_conc_0)
@@ -144,13 +151,20 @@ n2o_antro_emiss <- filter(other_global_emiss, variable == EMISSIONS_N2O())
 # Calculate natural N2O emissions
 natural_n2o <- get_natural_N2O(n2o_conc = n2o_conc, n2o_emiss = n2o_antro_emiss)
 
+WINDOW_SIZE <- 15
+
+# Apply the rolling mean, we will use a window size of 10 years.
+natural_n2o %>%
+    mutate(value = rollmean(value, k = WINDOW_SIZE, fill = "extend")) ->
+    natural_n2o
+
 # Hold the future natural N2O emissions constant for the rest
 # of the future period. This is the approach taken by other RCMs
 # see FAIR v1.3 documentation (Smith et al. 2018).
-# It will be the final 10 years of the time vayring natural n2o emissions.
+# It will be the final 10 years of the time varying natural n2o emissions.
 final_yr <- max(natural_n2o$year)
 natural_n2o %>%
-    filter(year %in% (final_yr-10):final_yr) %>%
+    filter(year %in% (final_yr-WINDOW_SIZE):final_yr) %>%
     pull(value) %>%
     mean ->
     future_value
@@ -166,11 +180,16 @@ natural_n2o %>%
 
 if(CHECK){
 
+    ggplot(data = final_natural_n2o) +
+        geom_line(aes(year, value))
+
     ini <- system.file(package = "hector", "input/hector_ssp245.ini")
     hc <- newcore(ini)
     setvar(hc, dates = n2o_antro_emiss$year, var = EMISSIONS_N2O(), values = n2o_antro_emiss$value, unit = getunits(EMISSIONS_N2O()))
     reset(hc)
     setvar(hc, dates = final_natural_n2o$year, var = NAT_EMISSIONS_N2O(), values = final_natural_n2o$value, unit = getunits(NAT_EMISSIONS_N2O()))
+    reset(hc)
+    setvar(hc, dates = NA, var = PREINDUSTRIAL_N2O(), values = 266.57, unit = "ppbv N2O")
     reset(hc)
     run(hc)
     out <- fetchvars(hc, n2o_conc$year, vars = CONCENTRATIONS_N2O())
@@ -183,8 +202,6 @@ if(CHECK){
 
     out$value - n2o_conc$value
 }
-
-
 
 global_total %>%
     rbind(final_natural_n2o) ->
@@ -203,7 +220,7 @@ data.frame(variable = NATURAL_CH4(),
     global_total
 
 # RF misc ----------------------------------------------------------------------
-# Hector's RF misc enables additional forcings that might be perscribed as part
+# Hector's RF misc enables additional forcings that might be prescribed as part
 # of a protocol be read as inputs (solar radiation, black carbon on snow ect.)
 # however in GCAM we assume this to be 0.
 data.frame(variable = RF_MISC(),

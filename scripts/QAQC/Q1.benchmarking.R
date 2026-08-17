@@ -79,7 +79,7 @@ for(VAR in unique(hector_data_obs_comp$variable)){
         geom_line(data = hector_to_plot, aes(year, hector, color = source)) +
         scale_color_manual(values = COLOR_SCHEME) +
         scale_fill_manual(values = COLOR_SCHEME) +
-        labs(title = VAR, y = hector_data_obs_comp$units[1]) +
+        labs(title = VAR, y = hector_to_plot$units[1]) +
         theme(legend.title = element_blank(), legend.position = "bottom") +
         geom_table(data = df, aes(x = x, y = y, label = tbl),
                    hjust = 0, vjust = 1)
@@ -222,6 +222,6 @@ ggplot() +
     scale_color_manual(values = COLOR_SCHEME) +
     theme(legend.position = "bottom", legend.title = element_blank()) +
     labs(x = NULL, y = "AWGP CO2 100", caption = "older hector results not avaiable") ->
-    plot
+    plot;plot
 
 ggsave(filename = file.path(FIGS_DIR, "AWGP", "AWGPCO2100.png"), width = WIDTH, height = HEIGHT)
