@@ -9,7 +9,8 @@ source(here::here("scripts", "constants.R"))
 file <- list.files(DIRS$RAW_DATA,
                    pattern = "rcmip-radiative-forcing-annual-means",
                    full.names = TRUE)
-stopifnot(file.exists(file))
+assert_that(file.exists(file), msg = "missing raw-data")
+
 
 
 # --- Forcing ------------------------------------------------------------------
