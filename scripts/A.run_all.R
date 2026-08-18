@@ -27,14 +27,14 @@ L2_files <- here("scripts", "L2", c("L2A.gcam_input_csv.R",
 
 # Finalize gcam-hector inputs, calibrate hector & natural CH4 emissions.
 CALIBRATION <- FALSE # Skip over calibration during development.
-L3_files    <- c("L3A.write_draft_ini.R",
-                 "L3B.calibration.R",
-                 "L3C.natural_ch4.R")
+L3_files    <- here("scripts", "L3", c("L3A.write_draft_ini.R",
+                                       "L3B.calibration.R",
+                                       "L3C.natural_ch4.R"))
 
-#files <- c(L0_files, L1_files, L2_files, L3_files)
-files <- L0_files
+files <- c(L0_files, L1_files, L2_files, L3_files)
 
 for(f in files){
     print(f)
     source(f)
 }
+
