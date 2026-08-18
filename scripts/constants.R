@@ -19,16 +19,6 @@ library(hector)
 library(readxl)
 library(readr)
 
-# During development let's not set these versions in stone
-if (FALSE) {
-    # TODO probably use a package manager but for now this is probably good enough
-    stopifnot(packageVersion("dplyr") == "1.1.4")
-    stopifnot(packageVersion("tidyr") == "1.3.1")
-    stopifnot(packageVersion("here") == "1.0.1")
-    stopifnot(packageVersion("zoo") == "1.8.12")
-    stopifnot(packageVersion("hector") == "3.5.0")
-}
-
 # packages that are probably not going to be required but could be helpful during
 # the developmental stage.
 library(ggplot2)
