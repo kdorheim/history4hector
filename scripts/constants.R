@@ -14,7 +14,7 @@ library(dplyr)
 library(here)
 library(tidyr)
 library(zoo)
-remotes::install_github("jgcri/hector@dev")
+#remotes::install_github("jgcri/hector@dev") # this only needs to be run once
 library(hector)
 library(readxl)
 library(readr)

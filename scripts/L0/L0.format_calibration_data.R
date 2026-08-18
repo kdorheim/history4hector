@@ -73,7 +73,8 @@ normalize_data_fxn <- function(data, yrs){
 #   temperature change from 1850: The HadCRUT5 data set. Journal of Geophysical
 #   Research, 126(3). https://doi.org/10.1029/2019jd032361
 fname <- file.path(DIRS$RAW_DATA, "HadCRUT.5.0.2.0.analysis.summary_series.global.annual.csv")
-stopifnot(file.exists(fname))
+assert_that(file.exists(fname), msg = "missing raw-data")
+
 
 read.csv(fname, col.names = c("year", "value", "lower", "upper")) %>%
     select(year, value, lower, upper) ->
@@ -109,8 +110,9 @@ temp_obs <- hadcrut_temp
 # Kuhlbrodt, T., Voldoire, A., Palmer, M. D., Geoffroy, O., & Killick, R. E. (2023).
 #   Historical Ocean Heat Uptake in Two Pairs of CMIP6 Models: Global and Regional
 #   Perspectives. Journal of Climate, 36(7), 2183–2203. https://doi.org/10.1175/JCLI-D-22-0468.1
-fname <- file.path(DIRS$RAW_DATA, "OHC_ensemble_Kuhlbrodt_etal_2022.csv")
-stopifnot(file.exists(fname))
+fname <- list.files(DIRS$RAW_DATA, "OHC_ensemble_Kuhlbrodt_etal_2022.csv", full.names = TRUE)
+assert_that(file.exists(fname), msg = "missing rawdata")
+
 
 # Reading in only OHC data
 ohc_data <- read.table(fname,

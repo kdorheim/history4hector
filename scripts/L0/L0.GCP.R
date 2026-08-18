@@ -15,8 +15,7 @@ source(here::here("scripts", "constants.R"))
 # Check inputs
 gcb_file <- list.files(DIRS$RAW_DATA, pattern = "Global_Carbon_Budget_",
                        full.names = TRUE, recursive = TRUE)
-assert_that(length(file.exists(gcb_file)) > 1,
-            msg = "missing data need run A2.get-raw-data.sh")
+assert_that(file.exists(gcb_file), msg = "missing raw-data")
 
 
 
