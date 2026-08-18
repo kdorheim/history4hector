@@ -9,7 +9,7 @@ source(here::here("scripts", "constants.R"))
 # csv table but the place holder "TABLE_NAME"
 get_default_ini <- function(){
 
-    fname <- file.path(DIRS$RAW_DATA, "hector_TABLE_NAME.ini")
+    fname <- file.path(DIRS$RAW_DATA, "Ad.hector_TABLE_NAME.ini")
     out   <- readLines(fname)
     return(out)
 }
