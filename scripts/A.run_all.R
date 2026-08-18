@@ -5,6 +5,10 @@
 
 library(here)
 
+# Boolean that controls is the calibration protocol is skipped or return,
+# typically set to FALSE to optimize the work flow run time.
+CALIBRATION <- FALSE # Skip over calibration during development.
+
 # 2. Main Chunk ----------------------------------------------------------------
 
 # Prep raw data
@@ -26,7 +30,6 @@ L2_files <- here("scripts", "L2", c("L2A.gcam_input_csv.R",
                                     "L2B.nongcam_input.R"))
 
 # Finalize gcam-hector inputs, calibrate hector & natural CH4 emissions.
-CALIBRATION <- FALSE # Skip over calibration during development.
 L3_files    <- here("scripts", "L3", c("L3A.write_draft_ini.R",
                                        "L3B.calibration.R",
                                        "L3C.natural_ch4.R"))
