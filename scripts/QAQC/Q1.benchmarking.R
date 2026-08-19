@@ -23,7 +23,7 @@ dir.create(FIGS_DIR, showWarnings = FALSE, recursive = TRUE)
 
 # Load the comparison data
 here::here("scripts/QAQC/data") %>%
-    list.files(pattern = "obs_comparison.csv", full.names = TRUE) %>%
+    list.files(pattern = "obs_comparison-", full.names = TRUE) %>%
     lapply(read.csv) %>%
     bind_rows ->
     hector_data_obs_comp
@@ -97,7 +97,7 @@ VARS <- c("OHC", "RF_CH4", "wmghg RF",  "total aerosol RF", "hist. warming")
 
 # Load the hector results
 here::here("scripts/QAQC/data") %>%
-    list.files(pattern = "AR6benchmarks.csv", full.names = TRUE) %>%
+    list.files(pattern = "AR6benchmarks-", full.names = TRUE) %>%
     lapply(read.csv) %>%
     bind_rows %>%
     filter(variable %in% VARS) ->
@@ -105,12 +105,12 @@ here::here("scripts/QAQC/data") %>%
 
 # Load the AR6 results, this includes the mean and the individual SCM results
 # AR6 scm benchmark results
-"scripts/QAQC/ar6_scms.csv" %>%
+"scripts/QAQC/raw-data/ar6_scms.csv" %>%
     read.csv %>%
     filter(variable %in% VARS) ->
     ar6_scm_benchmarks
 
-"scripts/QAQC/ar6.csv" %>%
+"scripts/QAQC/raw-data/ar6.csv" %>%
     read.csv %>%
     filter(variable %in% VARS) ->
     ar6_ipcc_benchmarks
@@ -176,8 +176,6 @@ for(V in VARS){
     ggsave(filename = file.path(FIGS_DIR, "ar6_benchmarks", paste0(V, "_hist_metrics.png")), width = WIDTH, height = HEIGHT)
 
 }
-
-
 
 
 # 4. AWGP CO2 100 --------------------------------------------------------------

@@ -64,5 +64,21 @@ A brief description of the purpose behind each of the script levels.
 |L1 | Convert from native units to Hector units. | 
 |L2 | Use mapping files to aggregate from individual emissions to global totals needed for Hector run. Also calculate and format natural emissions (N2O & CH4), volcanic, and lucc forcing.| 
 |L3 | Generate the Hector ini and input csv tables | 
+|QAQC | A some what random collection materials that can be used to evlalute the work flow, see next scetion for more details. |
+
+
+## ./scripts/QAQC/
+
+After the full workflow has been run the QAQC data and scripts can be used to evaluate and benchmark 
+how the new history for hector inputs are doing. 
+
+| Name|                                                              Description|
+|----:|------------------------------------------------------------------------:|
+|L0 | Import and format emissions data, (L0 csv files will be in native output units).|
+|L1 | Convert from native units to Hector units. | 
+|L2 | Use mapping files to aggregate from individual emissions to global totals needed for Hector run. Also calculate and format natural emissions (N2O & CH4), volcanic, and lucc forcing.| 
+|L3 | Generate the Hector ini and input csv tables | 
+
+
 
 

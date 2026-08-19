@@ -165,3 +165,55 @@ AR6B.get_historical_fxn <- function(rslts){
     return(out)
 
 }
+
+
+
+
+
+# Some functions that are defined here because they are only relevant to this
+# section.
+# TODO this might end up moving to a fxns script....
+
+# Helper function for running the IRF following the AR6 protocol to get the CO2 AWGP 100
+# Args
+#   HC: an active hector core, it should have the parameter values of interest
+#       already defined here
+#   IMPULSE_YR: default set to 1900
+#   HORIZON: default set to 100
+#   end_yr: default set to 2000
+co2_awgp_100 <- function(HC, IMPULSE_YR = 1900, HORIZON = 100, end_yr = 2000){
+
+    stopifnot(class(hc)[1] == "hcore")
+
+    # these should most likely be set to default
+    VARS <- RF_CO2()
+    YRS <- 1745:2400
+
+    # This should be
+    CO2_Tg <- 1
+    CONVERSION_FACTOR <- (12.01/44.01) * 1e-3 # convert from Tg CO2 to PgC
+
+    run(HC, runtodate = end_yr)
+    baseline <- fetchvars(HC, dates = YRS, vars = VARS)
+
+    # the impulse run
+    baseline_val <- fetchvars(HC, IMPULSE_YR, FFI_EMISSIONS())
+    impulse_val <- baseline_val$value +  (CO2_Tg * CONVERSION_FACTOR)
+    setvar(HC, IMPULSE_YR, var = FFI_EMISSIONS(), values = impulse_val, unit = getunits(FFI_EMISSIONS()))
+    run(HC, runtodate = end_yr)
+    impulse <- fetchvars(hc, dates = YRS, vars = VARS)
+
+
+    impulse %>%
+        rename(impulse=value) %>%
+        left_join(baseline) %>%
+        mutate(irf = impulse - value,
+               year = year - (IMPULSE_YR+1)) %>%
+        filter(year <= HORIZON) %>%
+        filter(year >= 0) %>%
+        pull(irf) %>%
+        sum ->
+        out
+
+    return(out)
+}
