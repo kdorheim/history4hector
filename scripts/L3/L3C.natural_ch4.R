@@ -182,29 +182,60 @@ with(as.list(p_values), {
     filter(variable == NATURAL_CH4()) ->
     natural_ch4_emissions
 
-## 2C. Future CH4 emissions ----------------------------------------------------
+# Define the window size!
+WINDOW_SIZE <- 15
 
-# The time varying emissions should stop at the point concentrations transition
-# from historical to projection
-# Calculate the decade average
-size <- 10
-
+# Apply the rolling mean, we will use a window size of X years.
 natural_ch4_emissions %>%
-    filter(year >= max(natural_ch4_emissions$year) - size) %>%
+    mutate(value = rollmean(value, k = WINDOW_SIZE, fill = "extend")) ->
+    natural_ch4
+
+# Hold the future natural CH4 emissions constant for the rest
+# of the future period. This is the approach taken by other RCMs
+# see FAIR v1.3 documentation (Smith et al. 2018).
+# It will be the final X years of the time varying natural n2o emissions.
+final_yr <- max(natural_ch4$year)
+natural_ch4 %>%
+    filter(year %in% (final_yr-WINDOW_SIZE):final_yr) %>%
     pull(value) %>%
     mean ->
-    average
+    future_value
 
-data.frame(value = average,
-           year = (FINAL_HIST_YEAR +1):2300,
-           variable = NATURAL_CH4()) ->
-    future_NCH4
+natural_ch4 %>%
+    bind_rows(
+        data.frame(year = (max(natural_ch4$year)+1):2300,
+                   value = future_value,
+                   variable = NATURAL_CH4(),
+                   units = getunits(NATURAL_CH4()))) ->
+    final_natural_ch4
+
+
+if(CHECK){
+
+    ggplot(data = final_natural_ch4) +
+        geom_line(aes(year, value))
+
+    ini <- system.file(package = "hector", "input/hector_ssp245.ini")
+    hc <- newcore(ini)
+    setvar(hc, dates = E_inputs$year, var = EMISSIONS_CH4(), values = E_inputs$CH4_emissions, unit = getunits(EMISSIONS_CH4()))
+    reset(hc)
+    setvar(hc, dates = final_natural_ch4$year, var = NATURAL_CH4(), values = final_natural_ch4$value, unit = getunits(NATURAL_CH4()))
+    reset(hc)
+    #setvar(hc, dates = NA, var = PREINDUSTRIAL_N2O(), values = 266.57, unit = "ppbv N2O")
+    #reset(hc)
+    run(hc)
+    out <- fetchvars(hc, ch4_conc$year, vars = CONCENTRATIONS_CH4())
+
+    out$value - ch4_conc$value
+
+    ggplot() +
+        geom_line(data = out, aes(year, value, color = "hector")) +
+        geom_line(data = ch4_conc, aes(year, value, color = "obs"))
+
+    out$value - ch4_conc$value
+}
 
 # 3. Save natural CH4 emissions -----------------------------------------------------------
-# Consolidate the natural emissions into a single data frame.
-rbind(natural_ch4_emissions, future_NCH4) %>%
-    mutate(units = getunits(NATURAL_CH4())) ->
-    final_ch4n_emiss
 
 # Load the place holder default emissions file and prep for use in the write_hector_csv
 # function, aka transform from wide to long.
@@ -215,7 +246,7 @@ read.csv(file.path(DIRS$INPUTS, "default_inputs.csv"), comment.char = ";") %>%
     # Remove the place holder natural CH4 emissions
     filter(variable != NATURAL_CH4()) %>%
     # Add the new natural CH4 emissions
-    rbind(final_ch4n_emiss) ->
+    rbind(final_natural_ch4) ->
     emissions_data
 
 # Save output
