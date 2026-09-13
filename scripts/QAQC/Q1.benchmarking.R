@@ -137,7 +137,7 @@ ggplot() +
                   aes(variable, ymin = min, ymax = max),
                   width=.2, alpha = 0.85) +
     geom_point(data = hector_data_AR6benchmarks, aes(variable, value, color = source),
-               position = position_jitter(height = 0, width = 0), alpha = 0.85) +
+               position = position_jitter(height = 0, width = JW), alpha = 0.85) +
     geom_point(data = ar6_scm_benchmarks, aes(variable, value, color = "scms from ar6"),
                shape = 4, position = position_jitter(height = 0, width = JW)) +
     geom_point(data = ar6_ipcc_benchmarks, aes(variable, value, color = "ipcc ar6"), shape = 4) +
@@ -159,7 +159,7 @@ for(V in VARS){
                       width=.5, alpha = 0.85) +
         geom_point(data = hector_data_AR6benchmarks  %>%
                        filter(variable == V), aes(variable, value, color = source),
-                   position = position_jitter(height = 0, width = 0), alpha = 0.85, size = 2) +
+                   position = position_jitter(height = 0, width = JW), alpha = 0.85, size = 2) +
         geom_point(data = ar6_scm_benchmarks  %>%
                        filter(variable == V), aes(variable, value, color = "scms from ar6"),
                    shape = 4, position = position_jitter(height = 0, width = JW), size = 2) +
@@ -216,7 +216,8 @@ ggplot() +
              alpha = 0.85, # Transparency level
              fill = "grey") + # Color of the shaded area
     geom_hline(yintercept = zieger) +
-    geom_point(data = hector_data_CO2AGWP100, aes(variable, value, color = source)) +
+    geom_point(data = hector_data_CO2AGWP100, aes(variable, value, color = source),
+               position = position_jitter(height = 0, width = JW)) +
     scale_color_manual(values = COLOR_SCHEME) +
     theme(legend.position = "bottom", legend.title = element_blank()) +
     labs(x = NULL, y = "AWGP CO2 100", caption = "older hector results not avaiable") ->

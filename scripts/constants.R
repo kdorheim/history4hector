@@ -8,20 +8,26 @@
 
 
 # 0. Load packages -------------------------------------------------------------
+# Load the custom JGCRI packages
+remotes::install_github("jgcri/hector@v3.5.5") # this only needs to be run once
+library(hector)
+stopifnot(packageVersion("hector") == "3.5.5")
+
+# Load all the standard CRAN packages.
 library(assertthat)
 library(data.table)
 library(dplyr)
 library(here)
 library(tidyr)
 library(zoo)
-#remotes::install_github("jgcri/hector@dev") # this only needs to be run once
-library(hector)
 library(readxl)
 library(readr)
 
 # packages that are probably not going to be required but could be helpful during
 # the developmental stage.
 library(ggplot2)
+
+
 
 # 1. Set Up Directories --------------------------------------------------------
 BASE <-  here::here()

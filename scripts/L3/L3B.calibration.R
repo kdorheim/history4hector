@@ -37,8 +37,7 @@ update_ini <- function(ini_lines, params){
 }
 
 # 1. Diff, Beta, Q10, MSE  -----------------------------------------------------
-if (CALIBRATION){
-
+if (FALSE){
 
     # In the first calibration only vary the diff parameter, we will want CO2 and
     # CH4 to be constrained. But since the N2O natural emissions have been determined
@@ -91,13 +90,81 @@ if (CALIBRATION){
     params_to_use <- round(c(fit1$par, fit2$par, "q10_rh" = 2.1), digits = 3)
     write.csv(data.frame(t(params_to_use)), file = file.path(DIRS$INTERMED, "hector_params.csv"), row.names = FALSE)
 
+}
+# else {
+#
+#     params_to_use <- read.csv(file.path(DIRS$INTERMED, "hector_params.csv"))
+#
+# }
+
+# 2. Diff, Beta, Vol, MSE  ------------------------------------------------
+if (TRUE){
+
+    # we can manually set q10 and alpha from other calibration.
+    constant_params <- c(1.07372401, 2.1, 3)
+    names(constant_params) <- c(AERO_SCALE(), Q10_RH(), ECS())
+
+
+    # In the first calibration only vary the diff parameter, we will want CO2 and
+    # CH4 to be constrained. But since the N2O natural emissions have been determined
+    # we do not need [N2O] to be constrained.
+    ini <- "inputs/hector-gcam.ini"
+    core <- newcore_w_constraints(ini, name = "constrainted", CO2 = TRUE, CH4 = TRUE)
+    core <- my_setvar_fxn(core, constant_params)
+
+    # Since we are only calibrating an EBM related parameters here,
+    # we only need to consider the temperature and ohc variables, but we
+    # are going to be calibrating the diffusivity and volcanic scalars...
+    comparison_data %>%
+        filter(variable %in% c(GLOBAL_TAS(), "OHC")) ->
+        comp_data
+
+    # Confirm that that objective fxn is set up properly...
+    fxn  <- internal_fn(p = c("diff" = 1, "vol_scalar" = 1),
+                        err_fn = obj_E4_unc,
+                        obs = comp_data,
+                        core = core)
+
+    fit1 <- optim(par = c("diff" = 2, "vol_scalar" = 1), fn = fxn,
+                  lower = c(0.5, 0.5),
+                  upper = c(3, 1.5),
+                  method = "L-BFGS-B")
+
+
+    params1 <- c(constant_params, fit1$par)
+
+
+    # Set up the hector core, that will be used to constrain
+    # the only free carbon cycle parameter value.
+    ini <- "inputs/hector-gcam.ini"
+    core <- newcore_w_constraints(ini, CH4 = TRUE)
+    core <- my_setvar_fxn(core,  params1)
+
+    # Now calibrate the carbon cycle parameters
+    comparison_data %>%
+        filter(variable == CONCENTRATIONS_CO2()) ->
+        comp_data
+
+    fxn  <- internal_fn(p = c("beta" = 0.1),
+                        err_fn = obj_MSE,
+                        obs = comp_data,
+                        core = core)
+
+    fit2 <- optim(par = c("beta" = .25),
+                  fn = fxn,
+                  lower = 0,
+                  upper = 0.63,
+                  method = "L-BFGS-B")
+
+    # Run Hector
+    params_to_use <- round(c(params1, fit2$par), digits = 3)
+    write.csv(data.frame(t(params_to_use)), file = file.path(DIRS$INTERMED, "hector_params.csv"), row.names = FALSE)
+
 } else {
 
     params_to_use <- read.csv(file.path(DIRS$INTERMED, "hector_params.csv"))
 
 }
-
-
 
 # 2. Update the ini file -------------------------------------------------------
 

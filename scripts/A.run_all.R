@@ -7,7 +7,8 @@ library(here)
 
 # Boolean that controls is the calibration protocol is skipped or return,
 # typically set to FALSE to optimize the work flow run time.
-CALIBRATION <- FALSE # Skip over calibration during development.
+# I recommend setting to FALSE, to skip over calibration during development/debugging.
+CALIBRATION <- FALSE
 
 # 2. Main Chunk ----------------------------------------------------------------
 

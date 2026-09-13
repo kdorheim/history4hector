@@ -12,16 +12,15 @@ source("scripts/QAQC/Q0.fxns.R")
 WRITE_TO <- here::here("scripts/QAQC/data")
 dir.create(WRITE_TO, showWarnings = FALSE, recursive = TRUE)
 
-VERSION <- "DEV"
+VERSION <- packageVersion("hector")
 
 # TODO I think that some sort of for loop here to go over different
 # parameter files would be the best option.
 current_dev <- here::here("data", "intermed", "hector_params.csv")
 
 # Load some older calibration parameterizations
-
 here::here("data", "intermed", "calibration_archive") %>%
-    list.files(full.names = TRUE)  ->
+    list.files(full.names = TRUE, pattern = "csv")  ->
     other_param_files
 
 tags <- gsub(pattern = "hector_params-|.csv" , x = basename(other_param_files), replacement = "")

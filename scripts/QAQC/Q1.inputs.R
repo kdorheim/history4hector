@@ -122,7 +122,7 @@ for(v in VARS){
 
 # 4. Natural Emissions ---------------------------------------------------------
 
-# So one of the big changes between this past hector integration and the udpate
+# So one of the big changes between this past hector integration and the update
 # is that we now have time varying natural emissions for CH4 and N2O during the
 # historical period. Quickly plot the differences here...
 
@@ -138,6 +138,7 @@ bind_rows(
                source =  "gcam8.8-hectorv3.2"),
     inputs_df) %>%
     filter(variable %in% c(NATURAL_CH4(), NAT_EMISSIONS_N2O())) %>%
+    filter(source %in% c("gcam8.8-hectorv3.2", "DEV")) %>%
     select(-file) ->
     natural_emissions_df
 
@@ -151,10 +152,14 @@ natural_emissions_df  %>%
 
 write.csv(RMSE_natemiss_inputs, file = file.path(WRITE_TO, "RMSE_natemiss_inputs.csv"), row.names = FALSE)
 
-
-
 # There might be some variables (forcing) worth checking out...
 VARS <- unique(natural_emissions_df$variable)
+
+# Other benchmarks
+data.frame( value = c(202, 9.1),
+            variable = c(NATURAL_CH4(), NAT_EMISSIONS_N2O()),
+            source = c("prather 2012", "prather 2012")) ->
+    prather
 
 for(v in VARS){
 
@@ -166,13 +171,18 @@ for(v in VARS){
         filter(variable == v) ->
         to_plot
 
-    to_plot %>%
-        ggplot(aes(year, value, color = source)) +
-        geom_line() +
+    prather %>%
+        filter(variable == v) ->
+        prather_benchmarks
+
+    ggplot() +
+        geom_line(data = to_plot, aes(year, value, color = source)) +
+        geom_hline(data = prather_benchmarks, aes(yintercept = value, color = source)) +
         labs(title = paste0(v, "  input comparison"),
              y = getunits(v),
              caption = paste0("RMSE: ", this_RMSE$RMSE)) +
-        scale_color_manual(values = COLOR_SCHEME)
+        scale_color_manual(values = COLOR_SCHEME) +
+        labs(caption = "grey benchmark is from prather")
 
     ggsave(filename = file.path(WRITE_TO, paste0(v, "-inputs.png")), width = WIDTH, height = HEIGHT)
 
