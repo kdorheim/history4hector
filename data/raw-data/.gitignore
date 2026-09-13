@@ -1,6 +1,9 @@
 *.xlsx
+*.xls
 *.zip
 *.csv
 *.[0-9]
 *.DS_Store
 README_aggregate_emissions.txt
+ClimateIndicator-data-9612b1d/
+aravg.ann.land_ocean.90S.90N.v6.0.0.202506.asc
